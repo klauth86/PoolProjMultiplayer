@@ -19,8 +19,8 @@ void ABallActor::BeginPlay()
 	{
 		GetStaticMeshComponent()->SetUseCCD(true);
 		GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
+		GetStaticMeshComponent()->SetNotifyRigidBodyCollision(true);
 
 		GetStaticMeshComponent()->SetSimulatePhysics(true);
-		GetStaticMeshComponent()->SetNotifyRigidBodyCollision(true);
 	}
 }
