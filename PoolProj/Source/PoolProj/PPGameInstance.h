@@ -6,7 +6,7 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "PPGameInstance.generated.h"
 
-class UBaseWidget;
+class UUserWidget;
 class UMenuWidget;
 class ULobbyWidget;
 class UGameWidget;
@@ -35,7 +35,7 @@ protected:
 	FString GetAssetPathFromSoftPath(const FSoftObjectPath& softPath) const;
 
 	void OnWorldBeginPlay();
-	void ClearUI();
+	void SetCurrentWidget(const TSubclassOf<UUserWidget>& userWidgetClass);
 
 	bool IsMenu() const { return IsLevel(MenuLevel); }
 	bool IsLobby() const { return IsLevel(LobbyLevel); }
@@ -48,9 +48,6 @@ protected:
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString) { ClientGoTo(MenuLevel); }
 
-	void OnUIConstruct();
-	void OnUIDestruct();
-
 	void ClientGoTo(FString address);
 	void ClientGoTo(const FSoftObjectPath& softPath) { ClientGoTo(GetAssetPathFromSoftPath(softPath)); }
 	void ServerGoTo(const FSoftObjectPath& softPath);
@@ -60,7 +57,7 @@ protected:
 protected:
 
 	UPROPERTY()
-		UBaseWidget* CurrentWidget;
+		UUserWidget* CurrentWidget;
 
 	UPROPERTY(EditDefaultsOnly, Category = "PPGameInstance: UI")
 		TSubclassOf<UMenuWidget> MenuWidgetClass;

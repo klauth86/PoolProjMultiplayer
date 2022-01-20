@@ -2,13 +2,13 @@
 
 #pragma once
 
-#include "UI/BaseWidget.h"
+#include "Blueprint/UserWidget.h"
 #include "MenuWidget.generated.h"
 
 class UJoinWidget;
 
 UCLASS()
-class POOLPROJ_API UMenuWidget : public UBaseWidget
+class POOLPROJ_API UMenuWidget : public UUserWidget
 {
 	GENERATED_BODY()
 

@@ -17,11 +17,5 @@ namespace ActionRouter
 
 	extern FToggleEvent OnStartGame;
 
-	extern FToggleEvent OnUIConstruct;
-
-	extern FToggleEvent OnUIDestruct;
-
 	extern FToggleEvent OnRefresh;
-
-	extern FToggleEvent OnClearUI;
 };

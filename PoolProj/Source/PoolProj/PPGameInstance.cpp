@@ -47,12 +47,7 @@ void UPPGameInstance::Init()
 
 	ActionRouter::OnStartGame.BindUObject(this, &UPPGameInstance::StartGame);
 
-	ActionRouter::OnUIConstruct.BindUObject(this, &UPPGameInstance::OnUIConstruct);
-	ActionRouter::OnUIDestruct.BindUObject(this, &UPPGameInstance::OnUIDestruct);
-
 	ActionRouter::OnRefresh.BindUObject(this, &UPPGameInstance::OnRefresh);
-
-	ActionRouter::OnClearUI.BindUObject(this, &UPPGameInstance::ClearUI);
 }
 
 void UPPGameInstance::BeginDestroy()
@@ -158,15 +153,13 @@ void UPPGameInstance::OnWorldBeginPlay()
 	{
 		if (bCreateNewSession) return CreateSession();
 
-		CurrentWidget = CreateWidget<UMenuWidget>(this, MenuWidgetClass);
-		CurrentWidget->AddToViewport();
+		SetCurrentWidget(MenuWidgetClass);
 	}
 	else if (IsLobby())
 	{
 		if (GetWorld()->IsServer())
 		{
-			CurrentWidget = CreateWidget<ULobbyWidget>(this, LobbyWidgetClass);
-			CurrentWidget->AddToViewport();
+			SetCurrentWidget(LobbyWidgetClass);
 		}
 		else
 		{
@@ -175,10 +168,42 @@ void UPPGameInstance::OnWorldBeginPlay()
 	}
 }
 
-void UPPGameInstance::ClearUI()
+void UPPGameInstance::SetCurrentWidget(const TSubclassOf<UUserWidget>& userWidgetClass)
 {
-	if (CurrentWidget) CurrentWidget->RemoveFromViewport();
-	CurrentWidget = nullptr;
+	if (!CurrentWidget && !userWidgetClass) return;
+
+	if (CurrentWidget && userWidgetClass && CurrentWidget->GetClass() == userWidgetClass) return;
+
+	if (CurrentWidget)
+	{
+		if (APlayerController* PlayerController = GetFirstLocalPlayerController())
+		{
+			FInputModeGameOnly InputModeData;
+			PlayerController->SetInputMode(InputModeData);
+
+			PlayerController->bShowMouseCursor = false;
+		}
+
+		CurrentWidget->RemoveFromViewport();
+		CurrentWidget = nullptr;
+	}
+
+	if (UUserWidget* userWidget = userWidgetClass ? CreateWidget<UUserWidget>(this, userWidgetClass) : nullptr)
+	{
+		CurrentWidget = userWidget;
+		CurrentWidget->AddToViewport();
+
+		if (APlayerController* PlayerController = GetFirstLocalPlayerController())
+		{
+			FInputModeUIOnly InputModeData;
+			InputModeData.SetWidgetToFocus(CurrentWidget->TakeWidget());
+			InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+			PlayerController->SetInputMode(InputModeData);
+
+			PlayerController->bShowMouseCursor = true;
+		}
+	}
 }
 
 void UPPGameInstance::OnCreateSessionComplete(FName SessionName, bool Success)
@@ -226,34 +251,9 @@ void UPPGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 	UE_LOG(LogTemp, Warning, TEXT("Could not get connect string."));
 }
 
-void UPPGameInstance::OnUIConstruct()
-{
-	if (APlayerController* PlayerController = GetFirstLocalPlayerController())
-	{
-		FInputModeUIOnly InputModeData;
-		InputModeData.SetWidgetToFocus(CurrentWidget->TakeWidget());
-		InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-
-		PlayerController->SetInputMode(InputModeData);
-
-		PlayerController->bShowMouseCursor = true;
-	}
-}
-
-void UPPGameInstance::OnUIDestruct()
-{
-	if (APlayerController* PlayerController = GetFirstLocalPlayerController())
-	{
-		FInputModeGameOnly InputModeData;
-		PlayerController->SetInputMode(InputModeData);
-
-		PlayerController->bShowMouseCursor = false;
-	}
-}
-
 void UPPGameInstance::ClientGoTo(FString address)
 {
-	ClearUI();
+	SetCurrentWidget(nullptr);
 
 	APlayerController* PlayerController = GetFirstLocalPlayerController();
 	if (!ensure(PlayerController != nullptr)) return;
@@ -263,7 +263,7 @@ void UPPGameInstance::ClientGoTo(FString address)
 
 void UPPGameInstance::ServerGoTo(const FSoftObjectPath& softPath)
 {
-	ClearUI();
+	SetCurrentWidget(nullptr);
 
 	UWorld* World = GetWorld();
 	if (!ensure(World != nullptr)) return;

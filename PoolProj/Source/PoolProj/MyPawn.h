@@ -29,24 +29,64 @@ public:
 
 	AMyPawn();
 
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void BeginPlay() override;
 
 	void Tick(float DeltaSeconds) override;
 
-	UPROPERTY(EditAnywhere, Category = MyPawn)
-		float Sight = 5000; // In Sm
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(EditAnywhere, Category = MyPawn)
-		float Mass = 1; // In Kg
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_AddMovementInput(FVector val);
+	void Server_AddMovementInput_Implementation(FVector val) { ControlInputVector += val; }
+	bool Server_AddMovementInput_Validate(FVector val) { return true; }
 
-	UPROPERTY(EditAnywhere, Category = MyPawn)
-		float ForceAmount = 760000; // IN Newtons
-	// https://billiards.colostate.edu/technical_proofs/new/TP_B-20.pdf
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
-		MyPawnState State = MyPawnState::ACTIVE;
 
-private:
+
+
+
+
+
+
+protected:
+
+	void CommonMoveForward(float Val);
+	void MoveForward(float Val);
+
+	void CommonMoveRight(float Val);
+	void MoveRight(float Val);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void CommonStopFire();
+	void CommonStopFire_Implementation();
+	bool CommonStopFire_Validate();
+	void StopFire();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void CommonStartFire();
+	void CommonStartFire_Implementation();
+	bool CommonStartFire_Validate();
+	void StartFire();
+
+	void SetupBodyInstance();
+
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSetYaw(float value);
+	void ServerSetYaw_Implementation(float value);
+	bool ServerSetYaw_Validate(float value);
+
+	void SetYaw();
+
+	UFUNCTION()
+	void OnRep_SetYaw();
+
+	void StopMovement();
+
+protected:
+
+	static TMap<int, AMyPawn*> Instances;
 
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* CollisionComponent;
@@ -69,50 +109,19 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		USoundBase* FallSfx;
 
-protected:
+	UPROPERTY(EditAnywhere, Category = MyPawn)
+		float Sight = 5000; // In Sm
 
-	void CommonMoveForward(float Val);
-	void MoveForward(float Val);
+	UPROPERTY(EditAnywhere, Category = MyPawn)
+		float Mass = 1; // In Kg
 
-	void CommonMoveRight(float Val);
-	void MoveRight(float Val);
+	UPROPERTY(EditAnywhere, Category = MyPawn)
+		float ForceAmount = 760000; // IN Newtons
+	// https://billiards.colostate.edu/technical_proofs/new/TP_B-20.pdf
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void CommonStopFire();
-	void CommonStopFire_Implementation();
-	bool CommonStopFire_Validate();
-	void StopFire();
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void CommonStartFire();
-	void CommonStartFire_Implementation();
-	bool CommonStartFire_Validate();
-	void StartFire();
-
-	void DrawRay();
-
-	void SetupBodyInstance();
-
-	static TMap<int, AMyPawn*> Instances;
-
-protected:
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+		MyPawnState State = MyPawnState::ACTIVE;
 
 	UPROPERTY(ReplicatedUsing = OnRep_SetYaw)
-	float Yaw;
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerSetYaw(float value);
-	void ServerSetYaw_Implementation(float value);
-	bool ServerSetYaw_Validate(float value);
-
-	void SetYaw();
-
-	UFUNCTION()
-	void OnRep_SetYaw();
-
-	void StopMovement();
-
-	void BeginPlay() override;
+		float Yaw;
 };

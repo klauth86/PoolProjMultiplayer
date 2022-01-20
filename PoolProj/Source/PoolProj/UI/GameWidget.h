@@ -2,11 +2,11 @@
 
 #pragma once
 
-#include "UI/BaseWidget.h"
+#include "Blueprint/UserWidget.h"
 #include "GameWidget.generated.h"
 
 UCLASS()
-class POOLPROJ_API UGameWidget : public UBaseWidget
+class POOLPROJ_API UGameWidget : public UUserWidget
 {
 	GENERATED_BODY()
 };

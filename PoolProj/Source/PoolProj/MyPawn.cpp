@@ -11,7 +11,6 @@ TMap<int, AMyPawn*> AMyPawn::Instances = TMap<int, AMyPawn*>();
 
 AMyPawn::AMyPawn()
 {
-	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	SetRemoteRoleForBackwardsCompat(ROLE_SimulatedProxy);
@@ -22,16 +21,11 @@ AMyPawn::AMyPawn()
 	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	RootComponent = CollisionComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CollisionComponent"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> meshAsset(TEXT("StaticMesh'/Game/Models/EyeBall/CollisionMesh.CollisionMesh'"));
-	CollisionComponent->SetStaticMesh(meshAsset.Object);
 	CollisionComponent->SetVisibility(false);
 
 	MeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>("MeshComponent");
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> smeshAsset(TEXT("SkeletalMesh'/Game/Models/EyeBall/EyeBall.EyeBall'"));
-	MeshComponent->SetSkeletalMesh(smeshAsset.Object);
 	MeshComponent->SetupAttachment(RootComponent);
 
-	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 30.0f; // The camera follows at this distance behind the character
@@ -40,7 +34,6 @@ AMyPawn::AMyPawn()
 	CameraBoom->bInheritPitch = false;
 	CameraBoom->bDoCollisionTest = false;
 
-	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
@@ -83,6 +76,22 @@ void AMyPawn::Tick(float DeltaSeconds)
 		}
 	}
 }
+
+void AMyPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AMyPawn, Yaw);
+	DOREPLIFETIME(AMyPawn, State);
+}
+
+
+
+
+
+
+
+
+
 
 void AMyPawn::SetupBodyInstance()
 {
@@ -129,7 +138,8 @@ void AMyPawn::MoveForward(float Value)
 		{
 			StopMovement();
 		}
-		////// TODO MovementComponent->MoveForward(ArrowComponent->GetForwardVector() * Value);
+
+		ControlInputVector += GetControlRotation().Vector() * Value;
 	}
 }
 
@@ -182,7 +192,7 @@ void AMyPawn::StartFire()
 	if (State == MyPawnState::ACTIVE)
 	{
 		State = MyPawnState::LAUNCHED;
-		////// TODO CollisionComponent->AddForce(ForceAmount * ArrowComponent->GetForwardVector());
+		CollisionComponent->AddForce(ForceAmount * GetActorForwardVector());
 	}
 }
 
@@ -232,16 +242,6 @@ void AMyPawn::StopMovement()
 	CollisionComponent->CreatePhysicsState();
 }
 
-void AMyPawn::DrawRay()
-{
-	auto location = this->GetActorLocation();
-	////// TODO
-	//////auto forward = ArrowComponent->GetForwardVector();
-
-	//////DrawDebugLine(GetWorld(), location, location + forward * Sight,
-	//////	FColor(255, 0, 0), false, 0.5f, 0.f, 3.f);
-}
-
 void AMyPawn::ServerSetYaw_Implementation(float value)
 {
 	Yaw = value;
@@ -263,11 +263,4 @@ void AMyPawn::SetYaw()
 	auto rotation = FRotator::ZeroRotator;
 	rotation.Yaw = Yaw;
 	SetActorRotation(rotation);
-}
-
-void AMyPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AMyPawn, Yaw);
-	DOREPLIFETIME(AMyPawn, State);
 }
