@@ -26,6 +26,17 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION()
+		void OnRep_IsPreparing();
+
+	bool IsPreparing() const { return bIsPreparing; }
+
+	bool IsActive() const { return bIsActive; }
+
+	void SetIsActive(bool isActive) { bIsActive = isActive; }
+
 protected:
 
 	void MoveForward(float Val);
@@ -36,16 +47,27 @@ protected:
 
 	void StopFire();
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_AddMovementInput(FVector val);
+	void Server_AddMovementInput_Implementation(FVector val) { ControlInputVector += val; }
+	bool Server_AddMovementInput_Validate(FVector val) { return true; }
+
 protected:
 
-	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "Character")
+		float MaxSpeed;
+
+	UPROPERTY(VisibleAnywhere, Category = "Character", meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* CollisionComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 		class USpringArmComponent* CameraBoom;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FollowCamera;
+
+	UPROPERTY(ReplicatedUsing = OnRep_IsPreparing)
+		uint8 bIsPreparing : 1;
 
 	UPROPERTY(Replicated)
 		uint8 bIsActive : 1;

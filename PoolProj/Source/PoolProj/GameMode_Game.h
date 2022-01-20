@@ -14,6 +14,22 @@ public:
 
 	AGameMode_Game();
 
+	virtual void RestartPlayer(AController* NewPlayer) override;
+
+	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+protected:
+
+	void OnPlayerPrepared();
+
+	void StartNextTurn();
+
+
+
+	void PostLogin(APlayerController* NewPlayer) override;
+
 	void CheckWinCondition(int ballCount);
 
 	void ResetScore();

@@ -5,6 +5,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "ActionRouter.h"
 
 APoolPawn::APoolPawn()
 {
@@ -24,6 +25,8 @@ APoolPawn::APoolPawn()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	MaxSpeed = 1200;
+	bIsPreparing = false;
 	bIsActive = false;
 }
 
@@ -37,6 +40,14 @@ void APoolPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (HasAuthority())
+	{
+		FVector movementInput = ConsumeMovementInputVector();
+		
+		AddActorWorldOffset(movementInput * MaxSpeed * DeltaTime, true);
+
+		UE_LOG(LogTemp, Warning, TEXT("Tick"))
+	}
 }
 
 void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -49,22 +60,39 @@ void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Released, this, &APoolPawn::StopFire);
 }
 
+void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APoolPawn, bIsPreparing);
+	DOREPLIFETIME(APoolPawn, bIsActive);
+}
+
+void APoolPawn::OnRep_IsPreparing() { if (!bIsPreparing) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
+
 void APoolPawn::MoveForward(float Val)
 {
+	if (FMath::IsNearlyZero(Val) || !bIsActive) return;
 
+	Server_AddMovementInput(GetControlRotation().Vector() * Val);
 }
 
 void APoolPawn::MoveRight(float Val)
 {
+	if (FMath::IsNearlyZero(Val) || !bIsActive) return;
 
+	Server_AddMovementInput(-GetControlRotation().Vector() * Val);
 }
 
 void APoolPawn::StartFire()
 {
+	if (!bIsActive) return;
+
 
 }
 
 void APoolPawn::StopFire()
 {
+	if (!bIsActive) return;
+
 
 }

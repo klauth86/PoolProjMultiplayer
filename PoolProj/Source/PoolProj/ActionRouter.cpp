@@ -11,3 +11,5 @@ FJoinGameEvent ActionRouter::OnJoinGame;
 FToggleEvent ActionRouter::OnStartGame;
 
 FToggleEvent ActionRouter::OnRefresh;
+
+FToggleEvent ActionRouter::Server_OnPlayerPrepared;
