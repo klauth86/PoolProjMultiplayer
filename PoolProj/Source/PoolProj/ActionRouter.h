@@ -20,4 +20,6 @@ namespace ActionRouter
 	extern FToggleEvent OnRefresh;
 
 	extern FToggleEvent Server_OnPlayerPrepared;
+
+	extern FToggleEvent Server_OnStartNextTurn;
 };

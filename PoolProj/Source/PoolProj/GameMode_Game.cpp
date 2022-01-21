@@ -8,7 +8,6 @@
 
 AGameMode_Game::AGameMode_Game()
 {
-	ResetScore();
 }
 
 void AGameMode_Game::RestartPlayer(AController* NewPlayer)
@@ -30,12 +29,16 @@ void AGameMode_Game::RestartPlayer(AController* NewPlayer)
 void AGameMode_Game::BeginPlay()
 {
 	ActionRouter::Server_OnPlayerPrepared.BindUObject(this, &AGameMode_Game::OnPlayerPrepared);
+	ActionRouter::Server_OnStartNextTurn.BindUObject(this, &AGameMode_Game::StartNextTurn);
+	
 	Super::BeginPlay();
 }
 
 void AGameMode_Game::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	ActionRouter::Server_OnPlayerPrepared.Unbind();
+	ActionRouter::Server_OnStartNextTurn.Unbind();
+
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -69,36 +72,4 @@ void AGameMode_Game::StartNextTurn()
 	pawns[activePawnIndex]->SetIsActive(true);
 
 	UE_LOG(LogTemp, Warning, TEXT("StartNextTurn... %s is Playing!"), *pawns[activePawnIndex]->GetName());
-}
-
-void AGameMode_Game::PostLogin(APlayerController* NewPlayer) {
-	Super::PostLogin(NewPlayer);
-
-	UE_LOG(LogTemp, Warning, TEXT("@@@ %s"), NewPlayer->GetPawn() ? *NewPlayer->GetPawn()->GetName() : TEXT("NULL"))
-}
-
-void AGameMode_Game::CheckWinCondition(int ballCount)
-{
-	if (ballCount == 0)
-	{
-		ActiveControllerId = -1;
-
-		if (Player1Score > Player2Score)
-		{
-			Winner = FName("Player 1");
-		}
-		else
-		{
-			Winner = FName("Player 2");
-		}
-
-		UE_LOG(LogTemp, Warning, TEXT("CheckWinCondition %d"), ballCount);
-	}
-}
-
-void AGameMode_Game::ResetScore()
-{
-	Player1Score = 0;
-	Player2Score = 0;
-	ActiveControllerId = 0;
 }

@@ -25,22 +25,4 @@ protected:
 	void OnPlayerPrepared();
 
 	void StartNextTurn();
-
-
-
-	void PostLogin(APlayerController* NewPlayer) override;
-
-	void CheckWinCondition(int ballCount);
-
-	void ResetScore();
-
-public:
-
-	int32 Player1Score;
-
-	int32 Player2Score;
-
-	int32 ActiveControllerId;
-
-	FName Winner;
 };

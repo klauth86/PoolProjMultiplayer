@@ -55,6 +55,12 @@ void APoolPawn::Tick(float DeltaTime)
 		FVector delta = movementInput * MaxSpeed * DeltaTime;
 		AddActorWorldOffset(delta);
 	}
+
+	float yawInput = ConsumeYawInput();
+	if (!FMath::IsNearlyZero(yawInput))
+	{
+		AddActorWorldRotation(FRotator(0, yawInput, 0));
+	}
 }
 
 void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -65,6 +71,7 @@ void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis("MoveRight", this, &APoolPawn::MoveRight);
 	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Pressed, this, &APoolPawn::StartFire);
 	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Released, this, &APoolPawn::StopFire);
+	PlayerInputComponent->BindAction("Skip", EInputEvent::IE_Pressed, this, &APoolPawn::Server_Skip);
 }
 
 void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -89,7 +96,8 @@ void APoolPawn::MoveRight(float Val)
 {
 	if (FMath::IsNearlyZero(Val) || !bIsActive) return;
 
-
+	AddControllerYawInput(Val);
+	Server_AddControllerYawInput(Val * GetController<APlayerController>()->InputYawScale);
 }
 
 void APoolPawn::StartFire()
@@ -105,3 +113,5 @@ void APoolPawn::StopFire()
 
 
 }
+
+void APoolPawn::Server_Skip_Implementation() { ActionRouter::Server_OnStartNextTurn.ExecuteIfBound(); }

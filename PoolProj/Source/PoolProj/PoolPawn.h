@@ -59,6 +59,18 @@ protected:
 	void Server_AddMovementInput_Implementation(FVector val) { ControlInputVector += val; }
 	bool Server_AddMovementInput_Validate(FVector val) { return true; }
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_AddControllerYawInput(float val);
+	void Server_AddControllerYawInput_Implementation(float val) { YawInput += val; }
+	bool Server_AddControllerYawInput_Validate(float val) { return true; }
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_Skip();
+	void Server_Skip_Implementation();
+	bool Server_Skip_Validate() { return true; }
+
+	float ConsumeYawInput() { float yawInput = YawInput; YawInput = 0; return yawInput; }
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Character", meta = (AllowPrivateAccess = "true"))
@@ -72,6 +84,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Character")
 		float MaxSpeed;
+
+	float YawInput;
 
 	UPROPERTY(ReplicatedUsing = OnRep_IsPrepared)
 		uint8 bIsPrepared : 1;
