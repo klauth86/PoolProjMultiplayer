@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "ActionRouter.h"
+#include "TimerManager.h"
 
 APoolPawn::APoolPawn()
 {
@@ -26,27 +27,33 @@ APoolPawn::APoolPawn()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	MaxSpeed = 1200;
-	bIsPreparing = false;
+	bIsPrepared = false;
 	bIsActive = false;
 }
 
 void APoolPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (GetLocalRole() == ENetRole::ROLE_Authority && GetRemoteRole() == ENetRole::ROLE_SimulatedProxy ||
+		GetLocalRole() == ENetRole::ROLE_AutonomousProxy && GetRemoteRole() == ENetRole::ROLE_Authority)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PoolPawn: %s Start preparing..."), *GetName())
+
+		FTimerHandle timerHandle;
+		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &APoolPawn::SetAsPrepared, 1);
+	}
 }
 
 void APoolPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (HasAuthority())
+	FVector movementInput = ConsumeMovementInputVector();
+	if (!movementInput.IsNearlyZero())
 	{
-		FVector movementInput = ConsumeMovementInputVector();
-		
-		AddActorWorldOffset(movementInput * MaxSpeed * DeltaTime, true);
-
-		UE_LOG(LogTemp, Warning, TEXT("Tick"))
+		FVector delta = movementInput * MaxSpeed * DeltaTime;
+		AddActorWorldOffset(delta);
 	}
 }
 
@@ -63,11 +70,13 @@ void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(APoolPawn, bIsPreparing);
+	DOREPLIFETIME(APoolPawn, bIsPrepared);
 	DOREPLIFETIME(APoolPawn, bIsActive);
 }
 
-void APoolPawn::OnRep_IsPreparing() { if (!bIsPreparing) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
+void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
+
+void APoolPawn::OnRep_IsActive() {}
 
 void APoolPawn::MoveForward(float Val)
 {
@@ -80,7 +89,7 @@ void APoolPawn::MoveRight(float Val)
 {
 	if (FMath::IsNearlyZero(Val) || !bIsActive) return;
 
-	Server_AddMovementInput(-GetControlRotation().Vector() * Val);
+
 }
 
 void APoolPawn::StartFire()

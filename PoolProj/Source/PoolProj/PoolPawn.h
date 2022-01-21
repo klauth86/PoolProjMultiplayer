@@ -29,9 +29,16 @@ public:
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION()
-		void OnRep_IsPreparing();
+		void OnRep_IsPrepared();
 
-	bool IsPreparing() const { return bIsPreparing; }
+	bool IsPrepared() const { return bIsPrepared; }
+
+	UFUNCTION()
+		void SetAsPrepared() { UE_LOG(LogTemp, Warning, TEXT("PoolPawn: %s Finish preparing..."), *GetName())
+		bIsPrepared = true; }
+
+	UFUNCTION()
+		void OnRep_IsActive();
 
 	bool IsActive() const { return bIsActive; }
 
@@ -54,9 +61,6 @@ protected:
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character")
-		float MaxSpeed;
-
 	UPROPERTY(VisibleAnywhere, Category = "Character", meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* CollisionComponent;
 
@@ -66,9 +70,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FollowCamera;
 
-	UPROPERTY(ReplicatedUsing = OnRep_IsPreparing)
-		uint8 bIsPreparing : 1;
+	UPROPERTY(EditDefaultsOnly, Category = "Character")
+		float MaxSpeed;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_IsPrepared)
+		uint8 bIsPrepared : 1;
+
+	UPROPERTY(ReplicatedUsing = OnRep_IsActive)
 		uint8 bIsActive : 1;
 };

@@ -44,7 +44,7 @@ void AGameMode_Game::OnPlayerPrepared()
 	for (TActorIterator<APoolPawn> It(GetWorld()); It; ++It)
 	{
 		APoolPawn* pawn = *It;
-		if (pawn->IsPreparing()) return;
+		if (!pawn->IsPrepared()) return;
 	}
 
 	StartNextTurn();
@@ -62,9 +62,13 @@ void AGameMode_Game::StartNextTurn()
 		if (pawn->IsActive()) activePawnIndex = pawnIndex;
 	}
 
-	pawns[activePawnIndex]->SetIsActive(false);
+	if (pawns.IsValidIndex(activePawnIndex)) pawns[activePawnIndex]->SetIsActive(false);
+	
 	activePawnIndex = (activePawnIndex + 1) % pawns.Num();
+	
 	pawns[activePawnIndex]->SetIsActive(true);
+
+	UE_LOG(LogTemp, Warning, TEXT("StartNextTurn... %s is Playing!"), *pawns[activePawnIndex]->GetName());
 }
 
 void AGameMode_Game::PostLogin(APlayerController* NewPlayer) {
