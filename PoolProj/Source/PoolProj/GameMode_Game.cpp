@@ -13,15 +13,33 @@ AGameMode_Game::AGameMode_Game()
 void AGameMode_Game::RestartPlayer(AController* NewPlayer)
 {
 	if (NewPlayer == nullptr || NewPlayer->IsPendingKillPending()) return;
+	
+	FString tags[2]{ PPTags::Player1Portal, PPTags::Player2Portal };
 
 	UWorld* World = GetWorld();
 
-	for (TActorIterator<AActor> It(World); It; ++It)
+	FConstPlayerControllerIterator ControllerIt = World->GetPlayerControllerIterator();
+	while (ControllerIt && *ControllerIt != NewPlayer) ControllerIt++;;
+
+	if (ControllerIt)
 	{
-		AActor* actor = *It;
-		if (actor->ActorHasTag(FName(NewPlayer->IsLocalPlayerController() ? PPTags::Player1Portal : PPTags::Player2Portal)))
+		for (TActorIterator<AActor> It(World); It; ++It)
 		{
-			return RestartPlayerAtPlayerStart(NewPlayer, actor);
+			AActor* actor = *It;
+			if (actor->ActorHasTag(FName(tags[ControllerIt.GetIndex()])))
+			{
+				UClass* pawnClass = GetDefaultPawnClassForController(NewPlayer);
+
+				float targetLength = pawnClass->GetDefaultObject<APoolPawn>()->GetTargetLength();
+				float targetAngle = pawnClass->GetDefaultObject<APoolPawn>()->GetTargetAngle();
+
+				FTransform transform;
+				transform.SetLocation(actor->GetActorLocation()
+					- actor->GetActorForwardVector() * targetLength * FMath::Cos(targetAngle / 180 * PI) + FVector(0, 0, targetLength * FMath::Sin(targetAngle / 180 * PI)));
+				transform.SetRotation((actor->GetActorLocation() - transform.GetLocation()).ToOrientationQuat());
+				
+				return RestartPlayerAtTransform(NewPlayer, transform);
+			}
 		}
 	}
 }

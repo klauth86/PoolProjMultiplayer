@@ -12,21 +12,9 @@ APoolPawn::APoolPawn()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	RootComponent = CollisionComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CollisionComponent"));
-
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 30.0f; // The camera follows at this distance behind the character
-	CameraBoom->SetRelativeRotation(FRotator(-30, 0, 0));
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-	CameraBoom->bInheritPitch = false;
-	CameraBoom->bDoCollisionTest = false;
-
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
 	MaxSpeed = 1200;
+	TargetLength = 30;
+	TargetAngle = 30;
 	bIsPrepared = false;
 	bIsActive = false;
 }
@@ -34,6 +22,8 @@ APoolPawn::APoolPawn()
 void APoolPawn::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UWorld* world = GetWorld();
 
 	if (GetLocalRole() == ENetRole::ROLE_Authority && GetRemoteRole() == ENetRole::ROLE_SimulatedProxy ||
 		GetLocalRole() == ENetRole::ROLE_AutonomousProxy && GetRemoteRole() == ENetRole::ROLE_Authority)
@@ -49,17 +39,20 @@ void APoolPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	FVector movementInput = ConsumeMovementInputVector();
-	if (!movementInput.IsNearlyZero())
+	if (HasAuthority())
 	{
-		FVector delta = movementInput * MaxSpeed * DeltaTime;
-		AddActorWorldOffset(delta);
-	}
+		FVector movementInput = ConsumeMovementInputVector();
+		if (!movementInput.IsNearlyZero())
+		{
+			FVector delta = movementInput * MaxSpeed * DeltaTime;
+			if (Representer) Representer->AddActorWorldOffset(delta);
+		}
 
-	float yawInput = ConsumeYawInput();
-	if (!FMath::IsNearlyZero(yawInput))
-	{
-		AddActorWorldRotation(FRotator(0, yawInput, 0));
+		float yawInput = ConsumeYawInput();
+		if (!FMath::IsNearlyZero(yawInput))
+		{
+			if (Representer) Representer->AddActorWorldRotation(FRotator(0, yawInput, 0));
+		}
 	}
 }
 
@@ -77,6 +70,7 @@ void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APoolPawn, Representer);
 	DOREPLIFETIME(APoolPawn, bIsPrepared);
 	DOREPLIFETIME(APoolPawn, bIsActive);
 }

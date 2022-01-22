@@ -44,6 +44,10 @@ public:
 
 	void SetIsActive(bool isActive) { bIsActive = isActive; }
 
+	float GetTargetLength() const { return TargetLength; }
+
+	float GetTargetAngle() const { return TargetAngle; }
+
 protected:
 
 	void MoveForward(float Val);
@@ -73,17 +77,20 @@ protected:
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, Category = "Character", meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* CollisionComponent;
+	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
+		TSubclassOf<AActor> RepresenterClass;
 
-	UPROPERTY(VisibleAnywhere, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-		class USpringArmComponent* CameraBoom;
+	UPROPERTY(Replicated)
+		AActor* Representer;
 
-	UPROPERTY(VisibleAnywhere, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-		class UCameraComponent* FollowCamera;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Character")
+	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		float MaxSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
+		float TargetLength;
+
+	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
+		float TargetAngle;
 
 	float YawInput;
 
