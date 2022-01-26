@@ -72,19 +72,18 @@ protected:
 	void Server_AddControllerYawInput_Implementation(float val) { YawInput += val; }
 	bool Server_AddControllerYawInput_Validate(float val) { return true; }
 
+	float ConsumeYawInput() { float yawInput = YawInput; YawInput = 0; return yawInput; }
+
 	UFUNCTION(Server, Reliable)
 	void Server_Skip();
 	void Server_Skip_Implementation();
 
-	float ConsumeYawInput() { float yawInput = YawInput; YawInput = 0; return yawInput; }
+	FVector GetRepresenterOffset() const;
 
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		TSubclassOf<AActor> RepresenterClass;
-
-	UPROPERTY(Replicated)
-		AActor* Representer;
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		float MaxSpeed;
@@ -96,6 +95,9 @@ protected:
 		float TargetAngle;
 
 	float YawInput;
+
+	UPROPERTY(Replicated)
+		AActor* Representer;
 
 	UPROPERTY(ReplicatedUsing = OnRep_IsPrepared)
 		uint8 bIsPrepared : 1;

@@ -5,7 +5,7 @@
 
 ABallActor::ABallActor()
 {
-	SetReplicates(true);
+	bReplicates = true;
 	SetReplicateMovement(true);
 
 	SetMobility(EComponentMobility::Movable);
@@ -21,6 +21,6 @@ void ABallActor::BeginPlay()
 		GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
 		GetStaticMeshComponent()->SetNotifyRigidBodyCollision(true);
 
-		GetStaticMeshComponent()->SetSimulatePhysics(true);
+		//GetStaticMeshComponent()->SetSimulatePhysics(true);
 	}
 }

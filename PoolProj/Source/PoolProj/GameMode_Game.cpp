@@ -13,8 +13,6 @@ AGameMode_Game::AGameMode_Game()
 void AGameMode_Game::RestartPlayer(AController* NewPlayer)
 {
 	if (NewPlayer == nullptr || NewPlayer->IsPendingKillPending()) return;
-	
-	FString tags[2]{ PPTags::Player1Portal, PPTags::Player2Portal };
 
 	UWorld* World = GetWorld();
 
@@ -23,10 +21,11 @@ void AGameMode_Game::RestartPlayer(AController* NewPlayer)
 
 	if (ControllerIt)
 	{
+		FName playerTag = FName(PPTags::GetPlayerTag(ControllerIt.GetIndex()));
 		for (TActorIterator<AActor> It(World); It; ++It)
 		{
 			AActor* actor = *It;
-			if (actor->ActorHasTag(FName(tags[ControllerIt.GetIndex()])))
+			if (actor->ActorHasTag(playerTag))
 			{
 				UClass* pawnClass = GetDefaultPawnClassForController(NewPlayer);
 
