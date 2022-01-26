@@ -15,4 +15,6 @@ public:
 	ABallActor();
 
 	virtual void BeginPlay() override;
+
+	bool IsStopped() const;
 };

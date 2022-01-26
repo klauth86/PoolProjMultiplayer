@@ -10,6 +10,7 @@
 #include "EngineUtils.h"
 #include "Common.h"
 #include "Representer.h"
+#include "BallActor.h"
 
 APoolPawn::APoolPawn()
 {
@@ -90,8 +91,19 @@ void APoolPawn::Tick(float DeltaTime)
 
 			if (Representer->IsStopped())
 			{
-				bHasBeenLaunched = false;
-				////// TODO if (isStopped) Server_Skip_Implementation();
+				bool allBallsAreStopped = true;
+
+				for (TActorIterator<ABallActor> It(world); It; ++It)
+				{
+					ABallActor* ballActor = *It;
+					if (!ballActor->IsStopped()) allBallsAreStopped = false;
+				}
+
+				if (allBallsAreStopped)
+				{
+					bHasBeenLaunched = false;
+					Server_Skip_Implementation();
+				}
 			}
 		}
 		else

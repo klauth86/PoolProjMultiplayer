@@ -32,17 +32,34 @@ void ARepresenter::Launch(float strength)
 
 void ARepresenter::StartBraking()
 {
+	InitAngularDamping = GetStaticMeshComponent()->GetAngularDamping();
+	InitLinearDamping = GetStaticMeshComponent()->GetLinearDamping();
+
 	GetStaticMeshComponent()->SetAngularDamping(0.5f);
 	GetStaticMeshComponent()->SetLinearDamping(0.5f);
 }
 
 void ARepresenter::StopBraking()
 {
-	GetStaticMeshComponent()->SetAngularDamping(0.5f);
-	GetStaticMeshComponent()->SetLinearDamping(0.5f);
+	GetStaticMeshComponent()->SetAngularDamping(InitAngularDamping);
+	GetStaticMeshComponent()->SetLinearDamping(InitLinearDamping);
 }
 
 bool ARepresenter::IsStopped() const
 {
+	if (!GetStaticMeshComponent()->IsSimulatingPhysics()) return true;
+
+	bool nearlyNoAngularVelocity = GetStaticMeshComponent()->GetPhysicsAngularVelocity().IsNearlyZero();
+	bool nearlyNoLinearVelocity = GetStaticMeshComponent()->GetPhysicsLinearVelocity().IsNearlyZero();
+	
+	if (nearlyNoAngularVelocity && nearlyNoLinearVelocity)
+	{
+		GetStaticMeshComponent()->PutAllRigidBodiesToSleep();
+		GetStaticMeshComponent()->WakeAllRigidBodies();
+
+		GetStaticMeshComponent()->SetSimulatePhysics(false);
+		return true;
+	}
+
 	return false;
 }

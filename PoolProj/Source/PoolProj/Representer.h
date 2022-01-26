@@ -3,11 +3,10 @@
 #pragma once
 
 #include "Engine/StaticMeshActor.h"
-#include "Interface/LaunchableActor.h"
 #include "Representer.generated.h"
 
 UCLASS()
-class POOLPROJ_API ARepresenter : public AStaticMeshActor, public ILaunchableActor
+class POOLPROJ_API ARepresenter : public AStaticMeshActor
 {
 	GENERATED_BODY()
 
@@ -17,11 +16,17 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void Launch(float strength) override;
+	void Launch(float strength);
 
-	virtual void StartBraking();
+	void StartBraking();
 
-	virtual void StopBraking();
+	void StopBraking();
 
-	virtual bool IsStopped() const override;
+	bool IsStopped() const;
+
+protected:
+
+	float InitAngularDamping;
+
+	float InitLinearDamping;
 };
