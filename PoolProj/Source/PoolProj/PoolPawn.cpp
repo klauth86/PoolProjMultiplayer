@@ -25,13 +25,12 @@ void APoolPawn::BeginPlay()
 
 	UWorld* world = GetWorld();
 
-	if (GetLocalRole() == ENetRole::ROLE_Authority && GetRemoteRole() == ENetRole::ROLE_SimulatedProxy ||
-		GetLocalRole() == ENetRole::ROLE_AutonomousProxy && GetRemoteRole() == ENetRole::ROLE_Authority)
+	if (HasNetOwner())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PoolPawn: %s Start preparing..."), *GetName())
+		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Start preparing..."), *(world->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *GetName());
 
 		FTimerHandle timerHandle;
-		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &APoolPawn::SetAsPrepared, 1);
+		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &APoolPawn::Server_SetAsPrepared, 1);
 	}
 }
 

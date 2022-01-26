@@ -33,9 +33,13 @@ public:
 
 	bool IsPrepared() const { return bIsPrepared; }
 
-	UFUNCTION()
-		void SetAsPrepared() { UE_LOG(LogTemp, Warning, TEXT("PoolPawn: %s Finish preparing..."), *GetName())
-		bIsPrepared = true; }
+	UFUNCTION(Server, Reliable)
+	void Server_SetAsPrepared();
+	void Server_SetAsPrepared_Implementation()
+	{
+		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s is prepared!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d: "), GPlayInEditorID) : FString("Server")), *GetName());
+		bIsPrepared = true;
+	}
 
 	UFUNCTION()
 		void OnRep_IsActive();
@@ -68,10 +72,9 @@ protected:
 	void Server_AddControllerYawInput_Implementation(float val) { YawInput += val; }
 	bool Server_AddControllerYawInput_Validate(float val) { return true; }
 
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Reliable)
 	void Server_Skip();
 	void Server_Skip_Implementation();
-	bool Server_Skip_Validate() { return true; }
 
 	float ConsumeYawInput() { float yawInput = YawInput; YawInput = 0; return yawInput; }
 

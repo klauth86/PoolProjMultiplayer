@@ -76,7 +76,9 @@ void AGameMode_Game::StartNextTurn()
 	int32 activePawnIndex = INDEX_NONE;
 	TArray<APoolPawn*> pawns;
 	
-	for (TActorIterator<APoolPawn> It(GetWorld()); It; ++It)
+	UWorld* world = GetWorld();
+
+	for (TActorIterator<APoolPawn> It(world); It; ++It)
 	{
 		APoolPawn* pawn = *It;
 		int32 pawnIndex = pawns.Add(pawn);
@@ -89,5 +91,5 @@ void AGameMode_Game::StartNextTurn()
 	
 	pawns[activePawnIndex]->SetIsActive(true);
 
-	UE_LOG(LogTemp, Warning, TEXT("StartNextTurn... %s is Playing!"), *pawns[activePawnIndex]->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("*** %s: StartNextTurn... %s is Playing!"), *(world->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d: "), GPlayInEditorID) : FString("Server")), *pawns[activePawnIndex]->GetName());
 }
