@@ -27,15 +27,22 @@ void ARepresenter::BeginPlay()
 void ARepresenter::Launch(float strength)
 {
 	GetStaticMeshComponent()->SetSimulatePhysics(true);
-	GetStaticMeshComponent()->AddImpulse(GetActorForwardVector() * strength * 7600, NAME_None, true);
+	GetStaticMeshComponent()->AddImpulse(GetActorForwardVector() * strength * 76000, NAME_None, true);
 }
 
-void ARepresenter::Brake()
+void ARepresenter::StartBraking()
 {
+	GetStaticMeshComponent()->SetAngularDamping(0.5f);
+	GetStaticMeshComponent()->SetLinearDamping(0.5f);
+}
 
+void ARepresenter::StopBraking()
+{
+	GetStaticMeshComponent()->SetAngularDamping(0.5f);
+	GetStaticMeshComponent()->SetLinearDamping(0.5f);
 }
 
 bool ARepresenter::IsStopped() const
 {
-	return true;
+	return false;
 }

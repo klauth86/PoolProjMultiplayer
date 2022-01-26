@@ -25,7 +25,9 @@ public:
 
 	virtual void Launch(float strength) {}
 
-	virtual void Brake() {}
+	virtual void StartBraking() {}
+
+	virtual void StopBraking() {}
 
 	virtual bool IsStopped() const { return true; }
 };

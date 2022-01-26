@@ -26,7 +26,8 @@ APoolPawn::APoolPawn()
 
 	bIsPrepared = false;
 	bIsActive = false;
-	bIsFiring = false;
+	bHasBeenLaunched = false;
+	bIsActionPressed = false;
 }
 
 void APoolPawn::BeginPlay()
@@ -66,28 +67,32 @@ void APoolPawn::Tick(float DeltaTime)
 
 	if (HasAuthority())
 	{
-		if (bIsFiring)
+		if (bIsActionPressed && !bHasBeenLaunched)
 		{
 			StrengthTimeLeft -= DeltaTime;
 			if (StrengthTimeLeft < 0) StrengthTimeLeft = 0;
 			Strength = FMath::Lerp(1.f, 0.f, StrengthTimeLeft / StrengthTime);
 
-			bIsPrevFiring = bIsFiring;
+			bIsActionPressedLastFrame = bIsActionPressed;
 		}
-		else if (bIsPrevFiring)
+		else if (bIsActionPressedLastFrame && !bHasBeenLaunched)
 		{
-			bIsPrevFiring = false;
+			bIsActionPressedLastFrame = false;
 
 			Representer->Launch(Strength);
 			bHasBeenLaunched = true;
 		}
 		else if (bHasBeenLaunched)
 		{
-			Representer->Brake();
-			bool isStopped = Representer->IsStopped();
-			bHasBeenLaunched = !isStopped;
+			if (bIsActionPressed && !bIsActionPressedLastFrame) Representer->StartBraking();
+			
+			if (!bIsActionPressed && bIsActionPressedLastFrame) Representer->StopBraking();
 
-			////// TODO if (isStopped) Server_Skip_Implementation();
+			if (Representer->IsStopped())
+			{
+				bHasBeenLaunched = false;
+				////// TODO if (isStopped) Server_Skip_Implementation();
+			}
 		}
 		else
 		{
@@ -110,17 +115,16 @@ void APoolPawn::Tick(float DeltaTime)
 	{
 		if (!Representer) return;
 
-		if (bHasBeenLaunched) return;
-
-		if (bIsActive) {
-			int z = 1;
+		if (bHasBeenLaunched) {
+			GetController()->SetControlRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
 		}
-
-		FVector representerOffset = GetRepresenterOffset();
-		if (!representerOffset.IsNearlyZero())
+		else
 		{
-			SetActorLocation(Representer->GetActorLocation() + representerOffset);
-			SetActorRotation(representerOffset.Rotation());
+			FVector representerOffset = GetRepresenterOffset();
+			if (!representerOffset.IsNearlyZero())
+			{
+				SetActorLocation(Representer->GetActorLocation() + representerOffset);
+			}
 		}
 	}
 }
@@ -131,8 +135,8 @@ void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &APoolPawn::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &APoolPawn::MoveRight);
-	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Pressed, this, &APoolPawn::StartFire);
-	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Released, this, &APoolPawn::StopFire);
+	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Pressed, this, &APoolPawn::Server_StartFire);
+	PlayerInputComponent->BindAction("Fire", EInputEvent::IE_Released, this, &APoolPawn::Server_StopFire);
 	PlayerInputComponent->BindAction("Skip", EInputEvent::IE_Pressed, this, &APoolPawn::Server_Skip);
 }
 
@@ -144,7 +148,6 @@ void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(APoolPawn, bIsPrepared);
 	DOREPLIFETIME(APoolPawn, bIsActive);
 	DOREPLIFETIME(APoolPawn, bHasBeenLaunched);
-	DOREPLIFETIME(APoolPawn, bIsFiring);
 }
 
 void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
@@ -166,29 +169,28 @@ void APoolPawn::MoveRight(float Val)
 	Server_AddControllerYawInput(Val * GetController<APlayerController>()->InputYawScale);
 }
 
-void APoolPawn::StartFire()
+void APoolPawn::Server_StartFire_Implementation()
 {
 	if (!bIsActive) return;
 
 	if (!bHasBeenLaunched)
 	{
-		Strength = 0;
 		StrengthTimeLeft = StrengthTime;
+		Strength = 0;
 
-		bIsPrevFiring = false;
-		bIsFiring = true;
+		bIsActionPressed = true;
 	}
 	else
 	{
-		bIsFiring = true;
+		bIsActionPressed = true;
 	}
 }
 
-void APoolPawn::StopFire()
+void APoolPawn::Server_StopFire_Implementation()
 {
 	if (!bIsActive) return;
 
-	bIsFiring = false;
+	bIsActionPressed = false;
 }
 
 void APoolPawn::Server_Skip_Implementation() { ActionRouter::Server_OnStartNextTurn.ExecuteIfBound(); }

@@ -59,9 +59,13 @@ protected:
 
 	void MoveRight(float Val);
 
-	void StartFire();
+	UFUNCTION(Server, Reliable)
+	void Server_StartFire();	
+	void Server_StartFire_Implementation();
 
-	void StopFire();
+	UFUNCTION(Server, Reliable)
+	void Server_StopFire();
+	void Server_StopFire_Implementation();
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_AddMovementInput(FVector val);
@@ -97,10 +101,10 @@ protected:
 
 	float YawInput;
 
+	float StrengthTimeLeft;
+
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		float StrengthTime;
-
-	float StrengthTimeLeft;
 
 	UPROPERTY(Replicated)
 		float Strength;
@@ -114,11 +118,10 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_IsActive)
 		uint8 bIsActive : 1;
 
-	uint8 bIsPrevFiring : 1;
-
 	UPROPERTY(Replicated)
 		uint8 bHasBeenLaunched : 1;
 
-	UPROPERTY(Replicated)
-		uint8 bIsFiring : 1;
+	uint8 bIsActionPressed : 1;
+
+	uint8 bIsActionPressedLastFrame : 1;
 };

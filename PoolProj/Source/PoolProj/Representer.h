@@ -19,7 +19,9 @@ public:
 
 	virtual void Launch(float strength) override;
 
-	virtual void Brake() override;
+	virtual void StartBraking();
+
+	virtual void StopBraking();
 
 	virtual bool IsStopped() const override;
 };
