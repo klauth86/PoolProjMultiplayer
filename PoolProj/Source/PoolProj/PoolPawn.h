@@ -8,6 +8,7 @@
 class UStaticMeshComponent;
 class USpringArmComponent;
 class UCameraComponent;
+class ARepresenter;
 
 UCLASS()
 class POOLPROJ_API APoolPawn : public APawn
@@ -83,7 +84,7 @@ protected:
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
-		TSubclassOf<AActor> RepresenterClass;
+		TSubclassOf<ARepresenter> RepresenterClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		float MaxSpeed;
@@ -96,12 +97,28 @@ protected:
 
 	float YawInput;
 
+	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
+		float StrengthTime;
+
+	float StrengthTimeLeft;
+
 	UPROPERTY(Replicated)
-		AActor* Representer;
+		float Strength;
+
+	UPROPERTY(Replicated)
+		ARepresenter* Representer;
 
 	UPROPERTY(ReplicatedUsing = OnRep_IsPrepared)
 		uint8 bIsPrepared : 1;
 
 	UPROPERTY(ReplicatedUsing = OnRep_IsActive)
 		uint8 bIsActive : 1;
+
+	uint8 bIsPrevFiring : 1;
+
+	UPROPERTY(Replicated)
+		uint8 bHasBeenLaunched : 1;
+
+	UPROPERTY(Replicated)
+		uint8 bIsFiring : 1;
 };

@@ -9,6 +9,7 @@
 #include "TimerManager.h"
 #include "EngineUtils.h"
 #include "Common.h"
+#include "Representer.h"
 
 APoolPawn::APoolPawn()
 {
@@ -17,8 +18,15 @@ APoolPawn::APoolPawn()
 	MaxSpeed = 400;
 	TargetLength = 30;
 	TargetAngle = 30;
+
+	YawInput = 0;
+
+	StrengthTime = 4;
+	Strength = 0;
+
 	bIsPrepared = false;
 	bIsActive = false;
+	bIsFiring = false;
 }
 
 void APoolPawn::BeginPlay()
@@ -32,12 +40,12 @@ void APoolPawn::BeginPlay()
 		int32 index = world->GetFirstPlayerController() == GetController() ? 0 : 1;
 		FName playerTag = FName(PPTags::GetPlayerTag(index));
 
-		for (TActorIterator<AActor> It(world); It; ++It)
+		for (TActorIterator<ARepresenter> It(world); It; ++It)
 		{
-			AActor* actor = *It;
-			if (actor->ActorHasTag(playerTag))
+			ARepresenter* representer = *It;
+			if (representer->ActorHasTag(playerTag))
 			{
-				Representer = actor;
+				Representer = representer;
 				break;
 			}
 		}
@@ -58,22 +66,56 @@ void APoolPawn::Tick(float DeltaTime)
 
 	if (HasAuthority())
 	{
-		FVector movementInput = ConsumeMovementInputVector();
-		if (!movementInput.IsNearlyZero())
+		if (bIsFiring)
 		{
-			FVector delta = movementInput * MaxSpeed * DeltaTime;
-			if (Representer) Representer->AddActorWorldOffset(delta, true);
-		}
+			StrengthTimeLeft -= DeltaTime;
+			if (StrengthTimeLeft < 0) StrengthTimeLeft = 0;
+			Strength = FMath::Lerp(1.f, 0.f, StrengthTimeLeft / StrengthTime);
 
-		float yawInput = ConsumeYawInput();
-		if (!FMath::IsNearlyZero(yawInput))
+			bIsPrevFiring = bIsFiring;
+		}
+		else if (bIsPrevFiring)
 		{
-			if (Representer) Representer->AddActorWorldRotation(FRotator(0, yawInput, 0));
+			bIsPrevFiring = false;
+
+			Representer->Launch(Strength);
+			bHasBeenLaunched = true;
+		}
+		else if (bHasBeenLaunched)
+		{
+			Representer->Brake();
+			bool isStopped = Representer->IsStopped();
+			bHasBeenLaunched = !isStopped;
+
+			////// TODO if (isStopped) Server_Skip_Implementation();
+		}
+		else
+		{
+			FVector movementInput = ConsumeMovementInputVector();
+			if (!movementInput.IsNearlyZero())
+			{
+				FVector delta = movementInput * MaxSpeed * DeltaTime;
+				Representer->AddActorWorldOffset(delta, true);
+			}
+
+			float yawInput = ConsumeYawInput();
+			if (!FMath::IsNearlyZero(yawInput))
+			{
+				Representer->AddActorWorldRotation(FRotator(0, yawInput, 0));
+			}
 		}
 	}
 
 	if (HasNetOwner())
 	{
+		if (!Representer) return;
+
+		if (bHasBeenLaunched) return;
+
+		if (bIsActive) {
+			int z = 1;
+		}
+
 		FVector representerOffset = GetRepresenterOffset();
 		if (!representerOffset.IsNearlyZero())
 		{
@@ -97,9 +139,12 @@ void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APoolPawn, Strength);
 	DOREPLIFETIME(APoolPawn, Representer);
 	DOREPLIFETIME(APoolPawn, bIsPrepared);
 	DOREPLIFETIME(APoolPawn, bIsActive);
+	DOREPLIFETIME(APoolPawn, bHasBeenLaunched);
+	DOREPLIFETIME(APoolPawn, bIsFiring);
 }
 
 void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
@@ -125,26 +170,34 @@ void APoolPawn::StartFire()
 {
 	if (!bIsActive) return;
 
+	if (!bHasBeenLaunched)
+	{
+		Strength = 0;
+		StrengthTimeLeft = StrengthTime;
 
+		bIsPrevFiring = false;
+		bIsFiring = true;
+	}
+	else
+	{
+		bIsFiring = true;
+	}
 }
 
 void APoolPawn::StopFire()
 {
 	if (!bIsActive) return;
 
-
+	bIsFiring = false;
 }
 
 void APoolPawn::Server_Skip_Implementation() { ActionRouter::Server_OnStartNextTurn.ExecuteIfBound(); }
 
 FVector APoolPawn::GetRepresenterOffset() const
 {
-	if (Representer)
-	{
-		static float cos = FMath::Cos(TargetAngle / 180 * PI);
-		static float sin = FMath::Sin(TargetAngle / 180 * PI);
-		return -Representer->GetActorForwardVector() * TargetLength * cos + FVector(0, 0, TargetLength * sin);
-	}
+	static float cos = FMath::Cos(TargetAngle / 180 * PI);
+	static float sin = FMath::Sin(TargetAngle / 180 * PI);
+	return -Representer->GetActorForwardVector() * TargetLength * cos + FVector(0, 0, TargetLength * sin);
 
 	return FVector::ZeroVector;
 }
