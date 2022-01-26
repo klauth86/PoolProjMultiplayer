@@ -93,7 +93,7 @@ void APoolPawn::Tick(float DeltaTime)
 			{
 				bool allBallsAreStopped = true;
 
-				for (TActorIterator<ABallActor> It(world); It; ++It)
+				for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
 				{
 					ABallActor* ballActor = *It;
 					if (!ballActor->IsStopped()) allBallsAreStopped = false;
@@ -187,6 +187,12 @@ void APoolPawn::Server_StartFire_Implementation()
 
 	if (!bHasBeenLaunched)
 	{
+		for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
+		{
+			ABallActor* ballActor = *It;
+			ballActor->Prepare();
+		}
+
 		StrengthTimeLeft = StrengthTime;
 		Strength = 0;
 

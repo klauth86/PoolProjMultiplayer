@@ -16,5 +16,7 @@ public:
 
 	virtual void BeginPlay() override;
 
+	void Prepare() const;
+
 	bool IsStopped() const;
 };

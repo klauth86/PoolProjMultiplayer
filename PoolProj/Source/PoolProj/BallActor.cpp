@@ -23,10 +23,16 @@ void ABallActor::BeginPlay()
 	}
 }
 
-bool ABallActor::IsStopped() const {
+void ABallActor::Prepare() const
+{
+	GetStaticMeshComponent()->SetSimulatePhysics(true);
+}
+
+bool ABallActor::IsStopped() const
+{
 	if (!GetStaticMeshComponent()->IsSimulatingPhysics()) return true;
 
-	bool nearlyNoAngularVelocity = GetStaticMeshComponent()->GetPhysicsAngularVelocity().IsNearlyZero();
+	bool nearlyNoAngularVelocity = GetStaticMeshComponent()->GetPhysicsAngularVelocityInRadians().IsNearlyZero();
 	bool nearlyNoLinearVelocity = GetStaticMeshComponent()->GetPhysicsLinearVelocity().IsNearlyZero();
 
 	if (nearlyNoAngularVelocity && nearlyNoLinearVelocity)

@@ -49,7 +49,7 @@ bool ARepresenter::IsStopped() const
 {
 	if (!GetStaticMeshComponent()->IsSimulatingPhysics()) return true;
 
-	bool nearlyNoAngularVelocity = GetStaticMeshComponent()->GetPhysicsAngularVelocity().IsNearlyZero();
+	bool nearlyNoAngularVelocity = GetStaticMeshComponent()->GetPhysicsAngularVelocityInRadians().IsNearlyZero();
 	bool nearlyNoLinearVelocity = GetStaticMeshComponent()->GetPhysicsLinearVelocity().IsNearlyZero();
 	
 	if (nearlyNoAngularVelocity && nearlyNoLinearVelocity)
