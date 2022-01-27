@@ -13,6 +13,8 @@ APoolPawn::APoolPawn()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	RespawnDistance = 500;
+
 	MaxSpeed = 400;
 	TargetLength = 30;
 	TargetAngle = 30;
@@ -73,7 +75,16 @@ void APoolPawn::Tick(float DeltaTime)
 
 	if (HasAuthority())
 	{
-		if (bIsActionPressed && !bHasBeenLaunched)
+		if (bIsActive && Representer->GetActorLocation().SizeSquared() > RespawnDistance * RespawnDistance)
+		{
+			Representer->Stop();
+			Representer->SetActorLocation(StartTurnLocation);
+			Representer->SetActorRotation(StartTurnRotation);
+			bHasBeenLaunched = false;
+			
+			Server_Skip_Implementation();
+		}
+		else if (bIsActionPressed && !bHasBeenLaunched)
 		{
 			StrengthTimeLeft -= DeltaTime;
 			if (StrengthTimeLeft < 0) StrengthTimeLeft = 0;
@@ -84,6 +95,9 @@ void APoolPawn::Tick(float DeltaTime)
 		else if (bIsActionPressedLastFrame && !bHasBeenLaunched)
 		{
 			bIsActionPressedLastFrame = false;
+
+			StartTurnLocation = Representer->GetActorLocation();
+			StartTurnRotation = Representer->GetActorRotation();
 
 			Representer->Launch(Strength);
 			bHasBeenLaunched = true;
@@ -143,6 +157,8 @@ void APoolPawn::Tick(float DeltaTime)
 		}
 		else
 		{
+			////// TODO Implement more soft return of Camera
+
 			FVector representerOffset = GetRepresenterOffset();
 			if (!representerOffset.IsNearlyZero())
 			{

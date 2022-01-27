@@ -110,6 +110,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		TSubclassOf<ARepresenter> RepresenterClass;
 
+	FVector StartTurnLocation;
+	
+	FRotator StartTurnRotation;
+
+	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
+		float RespawnDistance;
+
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		float MaxSpeed;
 
