@@ -6,6 +6,7 @@
 
 DECLARE_DELEGATE(FToggleEvent);
 DECLARE_DELEGATE_OneParam(FJoinGameEvent, int32);
+DECLARE_MULTICAST_DELEGATE_OneParam(FShotEvent, UClass* ballClass);
 
 namespace ActionRouter
 {
@@ -22,4 +23,8 @@ namespace ActionRouter
 	extern FToggleEvent Server_OnPlayerPrepared;
 
 	extern FToggleEvent Server_OnStartNextTurn;
+
+	extern FToggleEvent Server_OnStartNextTurn;
+
+	extern FShotEvent Server_OnShot;
 };

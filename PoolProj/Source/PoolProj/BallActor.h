@@ -18,5 +18,7 @@ public:
 
 	void Prepare() const;
 
+	void Stop() const;
+
 	bool IsStopped() const;
 };

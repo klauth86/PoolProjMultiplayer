@@ -23,14 +23,13 @@ public:
 
 	virtual void BeginPlay() override;
 
+	virtual void EndPlay(EEndPlayReason::Type endPlayReason) override;
+
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	UFUNCTION()
-		void OnRep_IsPrepared();
 
 	bool IsPrepared() const { return bIsPrepared; }
 
@@ -41,9 +40,6 @@ public:
 		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s is prepared!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d: "), GPlayInEditorID) : FString("Server")), *GetName());
 		bIsPrepared = true;
 	}
-
-	UFUNCTION()
-		void OnRep_IsActive();
 
 	bool IsActive() const { return bIsActive; }
 
@@ -85,6 +81,17 @@ protected:
 
 	FVector GetRepresenterOffset() const;
 
+	void OnShot(UClass* ballClass) { Shots.Add(ballClass); }
+
+	UFUNCTION()
+		void OnRep_IsPrepared();
+
+	UFUNCTION()
+		void OnRep_IsActive();
+
+	UFUNCTION()
+		void OnRep_Shots();
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
@@ -105,6 +112,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		float StrengthTime;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Shots)
+		TArray<UClass*> Shots;
 
 	UPROPERTY(Replicated)
 		float Strength;

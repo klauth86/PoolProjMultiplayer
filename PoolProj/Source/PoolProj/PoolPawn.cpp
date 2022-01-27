@@ -51,6 +51,8 @@ void APoolPawn::BeginPlay()
 				break;
 			}
 		}
+
+		ActionRouter::Server_OnShot.AddUObject(this, &APoolPawn::OnShot);
 	}
 
 	if (HasNetOwner())
@@ -60,6 +62,13 @@ void APoolPawn::BeginPlay()
 		FTimerHandle timerHandle;
 		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &APoolPawn::Server_SetAsPrepared, 1);
 	}
+}
+
+void APoolPawn::EndPlay(EEndPlayReason::Type endPlayReason)
+{
+	ActionRouter::Server_OnShot.RemoveAll(this);
+
+	Super::EndPlay(endPlayReason);
 }
 
 void APoolPawn::Tick(float DeltaTime)
@@ -91,6 +100,9 @@ void APoolPawn::Tick(float DeltaTime)
 
 			if (Representer->IsStopped())
 			{
+				////// TODO Implement more soft return from rolling state
+				Representer->SetActorRotation(FRotator(0, 0, Representer->GetActorRotation().Yaw));
+
 				bool allBallsAreStopped = true;
 
 				for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
@@ -162,10 +174,6 @@ void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(APoolPawn, bHasBeenLaunched);
 }
 
-void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
-
-void APoolPawn::OnRep_IsActive() {}
-
 void APoolPawn::MoveForward(float Val)
 {
 	if (FMath::IsNearlyZero(Val) || !bIsActive) return;
@@ -175,7 +183,7 @@ void APoolPawn::MoveForward(float Val)
 
 void APoolPawn::MoveRight(float Val)
 {
-	if (FMath::IsNearlyZero(Val) || !bIsActive) return;
+	if (FMath::IsNearlyZero(Val)) return;
 
 	AddControllerYawInput(Val);
 	Server_AddControllerYawInput(Val * GetController<APlayerController>()->InputYawScale);
@@ -220,4 +228,13 @@ FVector APoolPawn::GetRepresenterOffset() const
 	return -Representer->GetActorForwardVector() * TargetLength * cos + FVector(0, 0, TargetLength * sin);
 
 	return FVector::ZeroVector;
+}
+
+void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
+
+void APoolPawn::OnRep_IsActive() {}
+
+void APoolPawn::OnRep_Shots()
+{
+
 }

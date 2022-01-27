@@ -45,6 +45,14 @@ void ARepresenter::StopBraking()
 	GetStaticMeshComponent()->SetLinearDamping(InitLinearDamping);
 }
 
+void ARepresenter::Stop() const
+{
+	GetStaticMeshComponent()->PutAllRigidBodiesToSleep();
+	GetStaticMeshComponent()->WakeAllRigidBodies();
+
+	GetStaticMeshComponent()->SetSimulatePhysics(false);
+}
+
 bool ARepresenter::IsStopped() const
 {
 	if (!GetStaticMeshComponent()->IsSimulatingPhysics()) return true;
@@ -54,10 +62,7 @@ bool ARepresenter::IsStopped() const
 	
 	if (nearlyNoAngularVelocity && nearlyNoLinearVelocity)
 	{
-		GetStaticMeshComponent()->PutAllRigidBodiesToSleep();
-		GetStaticMeshComponent()->WakeAllRigidBodies();
-
-		GetStaticMeshComponent()->SetSimulatePhysics(false);
+		Stop();
 		return true;
 	}
 

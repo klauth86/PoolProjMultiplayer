@@ -28,6 +28,14 @@ void ABallActor::Prepare() const
 	GetStaticMeshComponent()->SetSimulatePhysics(true);
 }
 
+void ABallActor::Stop() const
+{
+	GetStaticMeshComponent()->PutAllRigidBodiesToSleep();
+	GetStaticMeshComponent()->WakeAllRigidBodies();
+
+	GetStaticMeshComponent()->SetSimulatePhysics(false);
+}
+
 bool ABallActor::IsStopped() const
 {
 	if (!GetStaticMeshComponent()->IsSimulatingPhysics()) return true;
@@ -37,10 +45,7 @@ bool ABallActor::IsStopped() const
 
 	if (nearlyNoAngularVelocity && nearlyNoLinearVelocity)
 	{
-		GetStaticMeshComponent()->PutAllRigidBodiesToSleep();
-		GetStaticMeshComponent()->WakeAllRigidBodies();
-
-		GetStaticMeshComponent()->SetSimulatePhysics(false);
+		Stop();
 		return true;
 	}
 

@@ -22,6 +22,8 @@ public:
 
 	void StopBraking();
 
+	void Stop() const;
+
 	bool IsStopped() const;
 
 protected:
