@@ -18,6 +18,7 @@ void ARepresenter::BeginPlay()
 
 	if (HasAuthority())
 	{
+		GetStaticMeshComponent()->SetGenerateOverlapEvents(true);
 		GetStaticMeshComponent()->SetUseCCD(true);
 		GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
 		GetStaticMeshComponent()->SetNotifyRigidBodyCollision(true);

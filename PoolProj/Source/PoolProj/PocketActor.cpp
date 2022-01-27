@@ -24,6 +24,8 @@ void APocketActor::NotifyActorBeginOverlap(AActor* OtherActor)
 	}
 	else if (ABallActor* ball = Cast<ABallActor>(OtherActor))
 	{
-
+		ball->SetAsShot();
+		ball->Stop();
+		ball->SetActorLocation(FVector(FMath::RandPointInCircle(1000), -1000));
 	}
 }

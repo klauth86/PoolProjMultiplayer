@@ -9,6 +9,8 @@ ABallActor::ABallActor()
 	SetReplicateMovement(true);
 
 	SetMobility(EComponentMobility::Movable);
+
+	bIsShot = false;
 }
 
 void ABallActor::BeginPlay()
@@ -17,6 +19,7 @@ void ABallActor::BeginPlay()
 
 	if (HasAuthority())
 	{
+		GetStaticMeshComponent()->SetGenerateOverlapEvents(true);
 		GetStaticMeshComponent()->SetUseCCD(true);
 		GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
 		GetStaticMeshComponent()->SetNotifyRigidBodyCollision(true);

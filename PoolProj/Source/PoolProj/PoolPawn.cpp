@@ -107,8 +107,11 @@ void APoolPawn::Tick(float DeltaTime)
 
 				for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
 				{
-					ABallActor* ballActor = *It;
-					if (!ballActor->IsStopped()) allBallsAreStopped = false;
+					ABallActor* ball = *It;
+					
+					if (ball->IsShot()) continue;
+					
+					if (!ball->IsStopped()) allBallsAreStopped = false;
 				}
 
 				if (allBallsAreStopped)
@@ -236,5 +239,8 @@ void APoolPawn::OnRep_IsActive() {}
 
 void APoolPawn::OnRep_Shots()
 {
+	if (HasNetOwner())
+	{
 
+	}
 }
