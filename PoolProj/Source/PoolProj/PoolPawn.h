@@ -38,7 +38,7 @@ public:
 	void Server_SetAsPrepared();
 	void Server_SetAsPrepared_Implementation()
 	{
-		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s is prepared!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d: "), GPlayInEditorID) : FString("Server")), *GetName());
+		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s is prepared!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *GetName());
 		bIsPrepared = true;
 	}
 

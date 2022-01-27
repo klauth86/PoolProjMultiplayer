@@ -90,5 +90,5 @@ void AGameMode_Game::StartNextTurn()
 	
 	pawns[activePawnIndex]->SetIsActive(true);
 
-	UE_LOG(LogTemp, Warning, TEXT("*** %s: StartNextTurn... %s is Playing!"), *(world->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d: "), GPlayInEditorID) : FString("Server")), *pawns[activePawnIndex]->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("*** %s: StartNextTurn... %s is Playing!"), *(world->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *pawns[activePawnIndex]->GetName());
 }

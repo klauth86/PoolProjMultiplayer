@@ -80,8 +80,10 @@ void APoolPawn::Tick(float DeltaTime)
 			Representer->Stop();
 			Representer->SetActorLocation(StartTurnLocation);
 			Representer->SetActorRotation(StartTurnRotation);
-			bHasBeenLaunched = false;
 			
+
+
+			bHasBeenLaunched = false;
 			Server_Skip_Implementation();
 		}
 		else if (bIsActionPressed && !bHasBeenLaunched)
@@ -234,7 +236,7 @@ void APoolPawn::Server_StopFire_Implementation()
 	bIsActionPressed = false;
 }
 
-void APoolPawn::Server_Skip_Implementation() { ActionRouter::Server_OnStartNextTurn.ExecuteIfBound(); }
+void APoolPawn::Server_Skip_Implementation() { if (!bIsActive) return;  ActionRouter::Server_OnStartNextTurn.ExecuteIfBound(); }
 
 FVector APoolPawn::GetRepresenterOffset() const
 {
