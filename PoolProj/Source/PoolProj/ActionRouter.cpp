@@ -17,3 +17,5 @@ FToggleEvent ActionRouter::Server_OnPlayerPrepared;
 FToggleEvent ActionRouter::Server_OnStartNextTurn;
 
 FShotEvent ActionRouter::Server_OnShot;
+
+FPawnEvent ActionRouter::Client_OnPrepared;

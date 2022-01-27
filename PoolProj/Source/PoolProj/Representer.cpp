@@ -3,13 +3,25 @@
 
 #include "Representer.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/BillboardComponent.h"
 
 ARepresenter::ARepresenter()
 {
+	BillboardComponent = CreateDefaultSubobject<UBillboardComponent>("BillboardComponent");
+	BillboardComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	BillboardComponent->SetVisibility(false);
+	BillboardComponent->SetHiddenInGame(false);
+
 	bReplicates = true;
 	SetReplicateMovement(true);
 
 	SetMobility(EComponentMobility::Movable);
+
+	Offset = 10;
+	Amplitude = 4;
+	Frequency = 3;
+
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ARepresenter::BeginPlay()
@@ -23,6 +35,15 @@ void ARepresenter::BeginPlay()
 		GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
 		GetStaticMeshComponent()->SetNotifyRigidBodyCollision(true);
 	}
+}
+
+void ARepresenter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!BillboardComponent->IsVisible()) return;
+
+	BillboardComponent->SetRelativeLocation(FVector(0, 0, FMath::Sin(GetWorld()->TimeSeconds * Frequency) * Amplitude + Offset));
 }
 
 void ARepresenter::Launch(float strength)
@@ -69,3 +90,11 @@ bool ARepresenter::IsStopped() const
 
 	return false;
 }
+
+void ARepresenter::ActivateDecor() const
+{
+	BillboardComponent->SetRelativeLocation(FVector(0, 0, FMath::Sin(GetWorld()->TimeSeconds * Frequency) * Amplitude + Offset));
+	BillboardComponent->SetVisibility(true);
+}
+
+void ARepresenter::DeactivateDecor() const { BillboardComponent->SetVisibility(false); }

@@ -9,4 +9,15 @@ UCLASS()
 class POOLPROJ_API UGameWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+
+	void NativeConstruct() override;
+
+	void NativeDestruct() override;
+
+protected:
+
+	UFUNCTION(BlueprintCallable, Category = "GameWidget")
+		void OnPrepared();
 };

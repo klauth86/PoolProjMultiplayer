@@ -5,6 +5,7 @@
 #include "GameFramework/Pawn.h"
 #include "PoolPawn.generated.h"
 
+class UGameWidget;
 class UStaticMeshComponent;
 class USpringArmComponent;
 class UCameraComponent;
@@ -83,6 +84,8 @@ protected:
 
 	void OnShot(UClass* ballClass) { Shots.Add(ballClass); }
 
+	void Client_OnPrepared(UObject* widgetOwner);
+
 	UFUNCTION()
 		void OnRep_IsPrepared();
 
@@ -92,7 +95,17 @@ protected:
 	UFUNCTION()
 		void OnRep_Shots();
 
+	void InitUI();
+
+	void UnInitUI();
+
 protected:
+
+	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
+		TSubclassOf<UGameWidget> GameWidgetClass;
+
+	UPROPERTY()
+		UGameWidget* GameWidget;
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		TSubclassOf<ARepresenter> RepresenterClass;

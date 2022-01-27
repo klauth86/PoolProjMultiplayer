@@ -1,16 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PoolPawn.h"
-#include "Components/StaticMeshComponent.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Camera/CameraComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "ActionRouter.h"
-#include "TimerManager.h"
 #include "EngineUtils.h"
 #include "Common.h"
+#include "ActionRouter.h"
 #include "Representer.h"
 #include "BallActor.h"
+#include "UI/GameWidget.h"
 
 APoolPawn::APoolPawn()
 {
@@ -55,17 +52,16 @@ void APoolPawn::BeginPlay()
 		ActionRouter::Server_OnShot.AddUObject(this, &APoolPawn::OnShot);
 	}
 
-	if (HasNetOwner())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Start preparing..."), *(world->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *GetName());
-
-		FTimerHandle timerHandle;
-		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &APoolPawn::Server_SetAsPrepared, 1);
+	if (HasNetOwner()) { 
+		InitUI();
+		ActionRouter::Client_OnPrepared.AddUObject(this, &APoolPawn::Client_OnPrepared);
 	}
 }
 
 void APoolPawn::EndPlay(EEndPlayReason::Type endPlayReason)
 {
+	ActionRouter::Client_OnPrepared.RemoveAll(this);
+
 	ActionRouter::Server_OnShot.RemoveAll(this);
 
 	Super::EndPlay(endPlayReason);
@@ -235,7 +231,11 @@ FVector APoolPawn::GetRepresenterOffset() const
 
 void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
 
-void APoolPawn::OnRep_IsActive() {}
+void APoolPawn::OnRep_IsActive() {
+	if (!HasNetOwner()) {
+		if (Representer) return bIsActive ? Representer->ActivateDecor() : Representer->DeactivateDecor();
+	}
+}
 
 void APoolPawn::OnRep_Shots()
 {
@@ -243,4 +243,24 @@ void APoolPawn::OnRep_Shots()
 	{
 
 	}
+}
+
+void APoolPawn::Client_OnPrepared(UObject* widgetOwner) { if (widgetOwner == GetController()) Server_SetAsPrepared(); }
+
+void APoolPawn::InitUI()
+{
+	if (GameWidgetClass)
+	{
+		if (UGameWidget* gameWidget = CreateWidget<UGameWidget>(GetController<APlayerController>(), GameWidgetClass))
+		{
+			GameWidget = gameWidget;
+			GameWidget->AddToViewport();
+		}
+	}
+}
+
+void APoolPawn::UnInitUI()
+{
+	if (GameWidget) GameWidget->RemoveFromViewport();
+	GameWidget = nullptr;
 }
