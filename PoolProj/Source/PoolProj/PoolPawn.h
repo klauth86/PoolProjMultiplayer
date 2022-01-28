@@ -6,8 +6,6 @@
 #include "PoolPawn.generated.h"
 
 class UGameWidget;
-class UStaticMeshComponent;
-class USpringArmComponent;
 class UCameraComponent;
 class ARepresenter;
 
@@ -36,11 +34,7 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void Server_SetAsPrepared();
-	void Server_SetAsPrepared_Implementation()
-	{
-		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s is prepared!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *GetName());
-		bIsPrepared = true;
-	}
+	void Server_SetAsPrepared_Implementation() { bIsPrepared = true; }
 
 	bool IsActive() const { return bIsActive; }
 
@@ -49,6 +43,8 @@ public:
 	float GetTargetLength() const { return TargetLength; }
 
 	float GetTargetAngle() const { return TargetAngle; }
+
+	FVector GetRepresenterOffset(FRotator rotation) const;
 
 protected:
 
@@ -80,8 +76,6 @@ protected:
 	void Server_Skip();
 	void Server_Skip_Implementation();
 
-	FVector GetRepresenterOffset() const;
-
 	void OnShot(UClass* ballClass) { Shots.Add(ballClass); }
 
 	void Client_OnPrepared(UObject* widgetOwner);
@@ -99,11 +93,14 @@ protected:
 
 	void UnInitUI();
 
-	UFUNCTION(Client, Reliable)
-	void Client_ResetControlRotation();
-	void Client_ResetControlRotation_Implementation();
+	void AttachToRepresneter();
+
+	void EndTurn();
 
 protected:
+
+	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"), Category = "PoolPawn")
+		UCameraComponent* CameraComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		TSubclassOf<UGameWidget> GameWidgetClass;
@@ -114,9 +111,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		TSubclassOf<ARepresenter> RepresenterClass;
 
-	FVector StartTurnLocation;
+	FVector PreLaunchLocation;
 	
-	FRotator StartTurnRotation;
+	FRotator PreLaunchRotation;
+
+	FVector PreFloatLocation;
+
+	FRotator PreFloatRotation;
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		float RespawnDistance;
@@ -129,6 +130,11 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		float TargetAngle;
+
+	float RestorePositionTimeLeft;
+
+	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
+		float RestorePositionTime;
 
 	float YawInput;
 
@@ -152,8 +158,9 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_IsActive)
 		uint8 bIsActive : 1;
 
-	UPROPERTY(Replicated)
-		uint8 bHasBeenLaunched : 1;
+	uint8 bIsFloatingToRepresenter : 1;
+
+	uint8 bHasBeenLaunched : 1;
 
 	uint8 bIsActionPressed : 1;
 

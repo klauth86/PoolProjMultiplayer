@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PoolPawn.h"
+#include "Camera/CameraComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "EngineUtils.h"
 #include "Common.h"
@@ -13,11 +14,15 @@ APoolPawn::APoolPawn()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	RootComponent = CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
+
 	RespawnDistance = 500;
 
 	MaxSpeed = 400;
 	TargetLength = 30;
 	TargetAngle = 30;
+
+	RestorePositionTime = 0.5f;
 
 	YawInput = 0;
 
@@ -26,6 +31,8 @@ APoolPawn::APoolPawn()
 
 	bIsPrepared = false;
 	bIsActive = false;
+
+	bIsFloatingToRepresenter = false;
 	bHasBeenLaunched = false;
 	bIsActionPressed = false;
 }
@@ -47,13 +54,14 @@ void APoolPawn::BeginPlay()
 			if (representer->ActorHasTag(playerTag))
 			{
 				Representer = representer;
+				AttachToRepresneter();
 				break;
 			}
 		}
 
 		ActionRouter::Server_OnShot.AddUObject(this, &APoolPawn::OnShot);
 	}
-
+	
 	if (HasNetOwner()) { 
 		InitUI();
 		ActionRouter::Client_OnPrepared.AddUObject(this, &APoolPawn::Client_OnPrepared);
@@ -73,104 +81,113 @@ void APoolPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (HasAuthority())
+	if (!HasAuthority()) return;
+
+	if (bIsActive && Representer->GetActorLocation().SizeSquared() > RespawnDistance * RespawnDistance)
 	{
-		if (bIsActive && Representer->GetActorLocation().SizeSquared() > RespawnDistance * RespawnDistance)
+		Representer->Stop();
+
+		Representer->SetActorLocation(PreLaunchLocation);
+		Representer->SetActorRotation(PreLaunchRotation);
+
+		AttachToRepresneter();
+		EndTurn();
+	}
+	else if (bIsActionPressed && !bHasBeenLaunched)
+	{
+		StrengthTimeLeft -= DeltaTime;
+		if (StrengthTimeLeft < 0) StrengthTimeLeft = 0;
+		Strength = FMath::Lerp(1.f, 0.f, StrengthTimeLeft / StrengthTime);
+
+		bIsActionPressedLastFrame = bIsActionPressed;
+	}
+	else if (bIsActionPressedLastFrame && !bHasBeenLaunched)
+	{
+		bIsActionPressedLastFrame = false;
+
+		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+		PreLaunchLocation = Representer->GetActorLocation();
+		PreLaunchRotation = Representer->GetActorRotation();
+
+		Representer->Launch(Strength);
+		bHasBeenLaunched = true;
+	}
+	else if (bHasBeenLaunched && !bIsFloatingToRepresenter)
+	{
+		SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
+
+		if (bIsActionPressed && !bIsActionPressedLastFrame) Representer->StartBraking();
+
+		if (!bIsActionPressed && bIsActionPressedLastFrame) Representer->StopBraking();
+
+		if (Representer->IsStopped())
 		{
-			Representer->Stop();
+			bool allBallsAreStopped = true;
 
-			Representer->SetActorLocation(StartTurnLocation);
-			Representer->SetActorRotation(StartTurnRotation);
+			for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
+			{
+				ABallActor* ball = *It;
 
-			Client_ResetControlRotation();
+				if (ball->IsShot()) continue;
 
-			bHasBeenLaunched = false;
-			Server_Skip_Implementation();
+				if (!ball->IsStopped()) allBallsAreStopped = false;
+			}
+
+			if (allBallsAreStopped)
+			{
+				RestorePositionTimeLeft = RestorePositionTime;
+				
+				PreLaunchRotation = Representer->GetActorRotation(); // Use same variable avoiding of need to add other
+
+				PreFloatLocation = GetActorLocation();
+				PreFloatRotation = GetActorRotation();
+				
+				bIsFloatingToRepresenter = true;
+				EndTurn();
+			}
 		}
-		else if (bIsActionPressed && !bHasBeenLaunched)
-		{
-			StrengthTimeLeft -= DeltaTime;
-			if (StrengthTimeLeft < 0) StrengthTimeLeft = 0;
-			Strength = FMath::Lerp(1.f, 0.f, StrengthTimeLeft / StrengthTime);
+	}
+	else if (bIsFloatingToRepresenter)
+	{
+		RestorePositionTimeLeft -= DeltaTime;
 
-			bIsActionPressedLastFrame = bIsActionPressed;
+		FRotator targetRotation = FRotator(0, 0, PreLaunchRotation.Yaw);
+
+		if (RestorePositionTimeLeft > 0)
+		{
+			float alpha = 1 - RestorePositionTimeLeft / RestorePositionTime;
+
+			Representer->SetActorRotation(FMath::Lerp(PreLaunchRotation, targetRotation, alpha));
+
+			SetActorLocation(FMath::Lerp(PreFloatLocation, Representer->GetActorLocation() + GetRepresenterOffset(targetRotation), alpha));
+			SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
 		}
-		else if (bIsActionPressedLastFrame && !bHasBeenLaunched)
+		else
 		{
-			bIsActionPressedLastFrame = false;
-
-			StartTurnLocation = Representer->GetActorLocation();
-			StartTurnRotation = Representer->GetActorRotation();
-
-			Representer->Launch(Strength);
-			bHasBeenLaunched = true;
-		}
-		else if (bHasBeenLaunched)
-		{
-			if (bIsActionPressed && !bIsActionPressedLastFrame) Representer->StartBraking();
+			Representer->SetActorRotation(targetRotation);
 			
-			if (!bIsActionPressed && bIsActionPressedLastFrame) Representer->StopBraking();
+			SetActorLocation(Representer->GetActorLocation() + GetRepresenterOffset(targetRotation));			
+			AttachToRepresneter();
 
-			if (Representer->IsStopped())
-			{
-				////// TODO Implement more soft return from rolling state
-				Representer->SetActorRotation(FRotator(0, 0, Representer->GetActorRotation().Yaw));
-
-				bool allBallsAreStopped = true;
-
-				for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
-				{
-					ABallActor* ball = *It;
-					
-					if (ball->IsShot()) continue;
-					
-					if (!ball->IsStopped()) allBallsAreStopped = false;
-				}
-
-				if (allBallsAreStopped)
-				{
-					bHasBeenLaunched = false;
-					Server_Skip_Implementation();
-				}
-			}
-		}
-		else
-		{
-			FVector movementInput = ConsumeMovementInputVector();
-			if (!movementInput.IsNearlyZero())
-			{
-				FVector delta = movementInput * MaxSpeed * DeltaTime;
-				Representer->AddActorWorldOffset(delta, true);
-			}
-
-			float yawInput = ConsumeYawInput();
-			if (!FMath::IsNearlyZero(yawInput))
-			{
-				Representer->AddActorWorldRotation(FRotator(0, yawInput, 0));
-			}
+			bIsFloatingToRepresenter = false;
 		}
 	}
-
-	if (HasNetOwner())
+	else
 	{
-		if (!Representer) return;
-
-		if (bHasBeenLaunched) {
-			GetController()->SetControlRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
-		}
-		else
+		FVector movementInput = ConsumeMovementInputVector();
+		if (!movementInput.IsNearlyZero())
 		{
-			////// TODO Implement more soft return of Camera
+			FVector delta = movementInput * MaxSpeed * DeltaTime;
+			Representer->AddActorWorldOffset(delta, true);
+		}
 
-			FVector representerOffset = GetRepresenterOffset();
-			if (!representerOffset.IsNearlyZero())
-			{
-				SetActorLocation(Representer->GetActorLocation() + representerOffset);
-			}
+		float yawInput = ConsumeYawInput();
+		if (!FMath::IsNearlyZero(yawInput))
+		{
+			Representer->AddActorWorldRotation(FRotator(0, yawInput, 0));
 		}
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("*** %s: %s P[%s]R[%s]!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName(), *(GetActorLocation().ToString()), *(Representer->GetActorLocation()).ToString());
 }
 
 void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -191,7 +208,6 @@ void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(APoolPawn, Representer);
 	DOREPLIFETIME(APoolPawn, bIsPrepared);
 	DOREPLIFETIME(APoolPawn, bIsActive);
-	DOREPLIFETIME(APoolPawn, bHasBeenLaunched);
 }
 
 void APoolPawn::MoveForward(float Val)
@@ -205,7 +221,6 @@ void APoolPawn::MoveRight(float Val)
 {
 	if (FMath::IsNearlyZero(Val)) return;
 
-	AddControllerYawInput(Val);
 	Server_AddControllerYawInput(Val * GetController<APlayerController>()->InputYawScale);
 }
 
@@ -241,11 +256,11 @@ void APoolPawn::Server_StopFire_Implementation()
 
 void APoolPawn::Server_Skip_Implementation() { if (!bIsActive) return;  ActionRouter::Server_OnStartNextTurn.ExecuteIfBound(); }
 
-FVector APoolPawn::GetRepresenterOffset() const
+FVector APoolPawn::GetRepresenterOffset(FRotator rotation) const
 {
 	static float cos = FMath::Cos(TargetAngle / 180 * PI);
 	static float sin = FMath::Sin(TargetAngle / 180 * PI);
-	return -Representer->GetActorForwardVector() * TargetLength * cos + FVector(0, 0, TargetLength * sin);
+	return -rotation.Vector() * TargetLength * cos + FVector(0, 0, TargetLength * sin);
 
 	return FVector::ZeroVector;
 }
@@ -286,7 +301,14 @@ void APoolPawn::UnInitUI()
 	GameWidget = nullptr;
 }
 
-void APoolPawn::Client_ResetControlRotation_Implementation()
+void APoolPawn::AttachToRepresneter()
 {
-	GetController()->SetControlRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
+	AttachToActor(Representer, FAttachmentTransformRules::KeepWorldTransform);
+	SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
+}
+
+void APoolPawn::EndTurn()
+{
+	bHasBeenLaunched = false;
+	Server_Skip_Implementation();
 }
