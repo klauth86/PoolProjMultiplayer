@@ -78,10 +78,11 @@ void APoolPawn::Tick(float DeltaTime)
 		if (bIsActive && Representer->GetActorLocation().SizeSquared() > RespawnDistance * RespawnDistance)
 		{
 			Representer->Stop();
+
 			Representer->SetActorLocation(StartTurnLocation);
 			Representer->SetActorRotation(StartTurnRotation);
-			
 
+			Client_ResetControlRotation();
 
 			bHasBeenLaunched = false;
 			Server_Skip_Implementation();
@@ -168,6 +169,8 @@ void APoolPawn::Tick(float DeltaTime)
 			}
 		}
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("*** %s: %s P[%s]R[%s]!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName(), *(GetActorLocation().ToString()), *(Representer->GetActorLocation()).ToString());
 }
 
 void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -281,4 +284,9 @@ void APoolPawn::UnInitUI()
 {
 	if (GameWidget) GameWidget->RemoveFromViewport();
 	GameWidget = nullptr;
+}
+
+void APoolPawn::Client_ResetControlRotation_Implementation()
+{
+	GetController()->SetControlRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
 }

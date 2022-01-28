@@ -99,6 +99,10 @@ protected:
 
 	void UnInitUI();
 
+	UFUNCTION(Client, Reliable)
+	void Client_ResetControlRotation();
+	void Client_ResetControlRotation_Implementation();
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
