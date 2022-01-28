@@ -23,21 +23,14 @@ void ABallActor::BeginPlay()
 		GetStaticMeshComponent()->SetUseCCD(true);
 		GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
 		GetStaticMeshComponent()->SetNotifyRigidBodyCollision(true);
+
+		GetStaticMeshComponent()->SetSimulatePhysics(true);
 	}
 }
 
-void ABallActor::Prepare() const
-{
-	GetStaticMeshComponent()->SetSimulatePhysics(true);
-}
+void ABallActor::Wake() const { GetStaticMeshComponent()->WakeAllRigidBodies(); }
 
-void ABallActor::Stop() const
-{
-	GetStaticMeshComponent()->PutAllRigidBodiesToSleep();
-	GetStaticMeshComponent()->WakeAllRigidBodies();
-
-	GetStaticMeshComponent()->SetSimulatePhysics(false);
-}
+void ABallActor::Sleep() const { GetStaticMeshComponent()->PutAllRigidBodiesToSleep(); }
 
 bool ABallActor::IsStopped() const
 {
@@ -48,7 +41,7 @@ bool ABallActor::IsStopped() const
 
 	if (nearlyNoAngularVelocity && nearlyNoLinearVelocity)
 	{
-		Stop();
+		Sleep();
 		return true;
 	}
 

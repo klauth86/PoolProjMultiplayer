@@ -87,11 +87,27 @@ void APoolPawn::Tick(float DeltaTime)
 	{
 		Representer->Stop();
 
-		Representer->SetActorLocation(PreLaunchLocation);
-		Representer->SetActorRotation(PreLaunchRotation);
+		bool allBallsAreStopped = true;
 
-		AttachToRepresneter();
-		EndTurn();
+		for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
+		{
+			ABallActor* ball = *It;
+
+			if (ball->IsShot()) continue;
+
+			if (!ball->IsStopped()) allBallsAreStopped = false;
+		}
+
+		if (allBallsAreStopped)
+		{
+			////// TODO Check if there could be collision with ball!
+
+			Representer->SetActorLocation(PreLaunchLocation);
+			Representer->SetActorRotation(PreLaunchRotation);
+
+			AttachToRepresneter();
+			EndTurn();
+		}
 	}
 	else if (bIsActionPressed && !bHasBeenLaunched)
 	{
@@ -109,6 +125,12 @@ void APoolPawn::Tick(float DeltaTime)
 
 		PreLaunchLocation = Representer->GetActorLocation();
 		PreLaunchRotation = Representer->GetActorRotation();
+
+		for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
+		{
+			ABallActor* ballActor = *It;
+			ballActor->Wake();
+		}
 
 		Representer->Launch(Strength);
 		bHasBeenLaunched = true;
@@ -230,12 +252,6 @@ void APoolPawn::Server_StartFire_Implementation()
 
 	if (!bHasBeenLaunched)
 	{
-		for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
-		{
-			ABallActor* ballActor = *It;
-			ballActor->Prepare();
-		}
-
 		StrengthTimeLeft = StrengthTime;
 		Strength = 0;
 
@@ -309,6 +325,12 @@ void APoolPawn::AttachToRepresneter()
 
 void APoolPawn::EndTurn()
 {
+	for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
+	{
+		ABallActor* ball = *It;
+		ball->Sleep();
+	}
+
 	bHasBeenLaunched = false;
 	Server_Skip_Implementation();
 }

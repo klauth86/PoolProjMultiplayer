@@ -16,9 +16,9 @@ public:
 
 	virtual void BeginPlay() override;
 
-	void Prepare() const;
+	void Wake() const;
 
-	void Stop() const;
+	void Sleep() const;
 
 	bool IsStopped() const;
 
