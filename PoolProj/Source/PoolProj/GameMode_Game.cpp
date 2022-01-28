@@ -28,14 +28,11 @@ void AGameMode_Game::RestartPlayer(AController* NewPlayer)
 			if (actor->ActorHasTag(playerTag))
 			{
 				UClass* pawnClass = GetDefaultPawnClassForController(NewPlayer);
-
-				float targetLength = pawnClass->GetDefaultObject<APoolPawn>()->GetTargetLength();
-				float targetAngle = pawnClass->GetDefaultObject<APoolPawn>()->GetTargetAngle();
+				FVector offset = pawnClass->GetDefaultObject<APoolPawn>()->GetRepresenterOffset(actor->GetActorRotation());
 
 				FTransform transform;
-				transform.SetLocation(actor->GetActorLocation()
-					- actor->GetActorForwardVector() * targetLength * FMath::Cos(targetAngle / 180 * PI) + FVector(0, 0, targetLength * FMath::Sin(targetAngle / 180 * PI)));
-				transform.SetRotation((actor->GetActorLocation() - transform.GetLocation()).ToOrientationQuat());
+				transform.SetLocation(actor->GetActorLocation() + offset);
+				transform.SetRotation((-offset).ToOrientationQuat());
 				
 				return RestartPlayerAtTransform(NewPlayer, transform);
 			}

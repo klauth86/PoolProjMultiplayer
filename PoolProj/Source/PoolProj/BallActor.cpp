@@ -34,8 +34,6 @@ void ABallActor::Sleep() const { GetStaticMeshComponent()->PutAllRigidBodiesToSl
 
 bool ABallActor::IsStopped() const
 {
-	if (!GetStaticMeshComponent()->IsSimulatingPhysics()) return true;
-
 	bool nearlyNoAngularVelocity = GetStaticMeshComponent()->GetPhysicsAngularVelocityInRadians().IsNearlyZero();
 	bool nearlyNoLinearVelocity = GetStaticMeshComponent()->GetPhysicsLinearVelocity().IsNearlyZero();
 

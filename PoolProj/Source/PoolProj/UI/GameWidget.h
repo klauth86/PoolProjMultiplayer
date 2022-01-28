@@ -16,6 +16,9 @@ public:
 
 	void NativeDestruct() override;
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "GameWidget")
+	void OnStartTurn();
+
 protected:
 
 	UFUNCTION(BlueprintCallable, Category = "GameWidget")

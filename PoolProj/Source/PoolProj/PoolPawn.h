@@ -38,11 +38,7 @@ public:
 
 	bool IsActive() const { return bIsActive; }
 
-	void SetIsActive(bool isActive) { bIsActive = isActive; }
-
-	float GetTargetLength() const { return TargetLength; }
-
-	float GetTargetAngle() const { return TargetAngle; }
+	void SetIsActive(bool isActive);
 
 	FVector GetRepresenterOffset(FRotator rotation) const;
 

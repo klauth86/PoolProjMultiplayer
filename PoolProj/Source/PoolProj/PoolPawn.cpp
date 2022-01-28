@@ -232,6 +232,17 @@ void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(APoolPawn, bIsActive);
 }
 
+void APoolPawn::SetIsActive(bool isActive) { bIsActive = isActive; if (isActive && GameWidget) GameWidget->OnStartTurn(); }
+
+FVector APoolPawn::GetRepresenterOffset(FRotator rotation) const
+{
+	static float cos = FMath::Cos(TargetAngle / 180 * PI);
+	static float sin = FMath::Sin(TargetAngle / 180 * PI);
+	return -rotation.Vector() * TargetLength * cos + FVector(0, 0, TargetLength * sin);
+
+	return FVector::ZeroVector;
+}
+
 void APoolPawn::MoveForward(float Val)
 {
 	if (FMath::IsNearlyZero(Val) || !bIsActive) return;
@@ -272,21 +283,15 @@ void APoolPawn::Server_StopFire_Implementation()
 
 void APoolPawn::Server_Skip_Implementation() { if (!bIsActive) return;  ActionRouter::Server_OnStartNextTurn.ExecuteIfBound(); }
 
-FVector APoolPawn::GetRepresenterOffset(FRotator rotation) const
-{
-	static float cos = FMath::Cos(TargetAngle / 180 * PI);
-	static float sin = FMath::Sin(TargetAngle / 180 * PI);
-	return -rotation.Vector() * TargetLength * cos + FVector(0, 0, TargetLength * sin);
-
-	return FVector::ZeroVector;
-}
-
 void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
 
-void APoolPawn::OnRep_IsActive() {
-	if (!HasNetOwner()) {
-		if (Representer) return bIsActive ? Representer->ActivateDecor() : Representer->DeactivateDecor();
-	}
+void APoolPawn::OnRep_IsActive()
+{
+	UE_LOG(LogTemp, Warning, TEXT("*** %s: %s InitUI!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *GetName());
+
+	if (GameWidget && bIsActive) GameWidget->OnStartTurn();
+
+	if (!HasNetOwner() && Representer) return bIsActive ? Representer->ActivateDecor() : Representer->DeactivateDecor();
 }
 
 void APoolPawn::OnRep_Shots()
@@ -303,6 +308,8 @@ void APoolPawn::InitUI()
 {
 	if (GameWidgetClass)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s InitUI!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *GetName());
+
 		if (UGameWidget* gameWidget = CreateWidget<UGameWidget>(GetController<APlayerController>(), GameWidgetClass))
 		{
 			GameWidget = gameWidget;
