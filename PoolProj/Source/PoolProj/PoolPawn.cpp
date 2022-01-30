@@ -353,6 +353,7 @@ void APoolPawn::EndTurn()
 	}
 
 	bHasBeenLaunched = false;
+	bIsActionPressed = false;
 	Server_Skip_Implementation();
 }
 
