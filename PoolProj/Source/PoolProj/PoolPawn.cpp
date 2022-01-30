@@ -83,6 +83,11 @@ void APoolPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bHasBeenLaunched && !bIsFloatingToRepresenter)
+	{
+		SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
+	}
+	
 	if (!HasAuthority()) return;
 
 	if (bIsActive && Representer->GetActorLocation().SizeSquared() > RespawnDistance * RespawnDistance)
@@ -141,8 +146,6 @@ void APoolPawn::Tick(float DeltaTime)
 	}
 	else if (bHasBeenLaunched && !bIsFloatingToRepresenter)
 	{
-		SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
-
 		if (bIsActionPressed && !bIsActionPressedLastFrame) Representer->StartBraking();
 
 		if (!bIsActionPressed && bIsActionPressedLastFrame) Representer->StopBraking();
@@ -234,6 +237,8 @@ void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(APoolPawn, Representer);
 	DOREPLIFETIME(APoolPawn, bIsPrepared);
 	DOREPLIFETIME(APoolPawn, bIsActive);
+	DOREPLIFETIME(APoolPawn, bIsFloatingToRepresenter);
+	DOREPLIFETIME(APoolPawn, bHasBeenLaunched);
 }
 
 void APoolPawn::SetIsActive(bool isActive)

@@ -158,8 +158,10 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_IsActive)
 		uint8 bIsActive : 1;
 
+	UPROPERTY(Replicated)
 	uint8 bIsFloatingToRepresenter : 1;
 
+	UPROPERTY(Replicated)
 	uint8 bHasBeenLaunched : 1;
 
 	uint8 bIsActionPressed : 1;
