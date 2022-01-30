@@ -9,6 +9,8 @@
 #include "Representer.h"
 #include "BallActor.h"
 #include "UI/GameWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameDataSingleton.h"
 
 APoolPawn::APoolPawn()
 {
@@ -100,6 +102,8 @@ void APoolPawn::Tick(float DeltaTime)
 
 		if (allBallsAreStopped)
 		{
+			Client_OnLostPoint();
+
 			////// TODO Check if there could be collision with ball!
 
 			Representer->SetActorLocation(PreLaunchLocation);
@@ -232,7 +236,15 @@ void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(APoolPawn, bIsActive);
 }
 
-void APoolPawn::SetIsActive(bool isActive) { bIsActive = isActive; if (isActive && GameWidget) GameWidget->OnStartTurn(); }
+void APoolPawn::SetIsActive(bool isActive)
+{
+	bIsActive = isActive;
+	if (isActive && GameWidget)
+	{
+		GameWidget->OnStartTurn();
+		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Start turn!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName());
+	}
+}
 
 FVector APoolPawn::GetRepresenterOffset(FRotator rotation) const
 {
@@ -287,9 +299,11 @@ void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPla
 
 void APoolPawn::OnRep_IsActive()
 {
-	UE_LOG(LogTemp, Warning, TEXT("*** %s: %s InitUI!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *GetName());
-
-	if (GameWidget && bIsActive) GameWidget->OnStartTurn();
+	if (GameWidget && bIsActive)
+	{
+		GameWidget->OnStartTurn();
+		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Start turn!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName());
+	}
 
 	if (!HasNetOwner() && Representer) return bIsActive ? Representer->ActivateDecor() : Representer->DeactivateDecor();
 }
@@ -340,4 +354,13 @@ void APoolPawn::EndTurn()
 
 	bHasBeenLaunched = false;
 	Server_Skip_Implementation();
+}
+
+void APoolPawn::Client_OnLostPoint_Implementation() {
+	UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Client_OnLostPoint!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName());
+
+	if (USoundBase* soundBase = UGameDataSingleton::GetInstance()->GetLostPointSfx())
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), soundBase);
+	}
 }

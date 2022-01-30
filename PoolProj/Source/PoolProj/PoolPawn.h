@@ -93,6 +93,10 @@ protected:
 
 	void EndTurn();
 
+	UFUNCTION(Client, Reliable)
+	void Client_OnLostPoint();
+	void Client_OnLostPoint_Implementation();
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"), Category = "PoolPawn")
