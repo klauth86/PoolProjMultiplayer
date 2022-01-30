@@ -89,8 +89,6 @@ protected:
 
 	void UnInitUI();
 
-	void AttachToRepresneter();
-
 	void EndTurn();
 
 	UFUNCTION(Client, Reliable)
@@ -131,6 +129,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
 		float TargetAngle;
 
+	UPROPERTY(Replicated)
 	float RestorePositionTimeLeft;
 
 	UPROPERTY(EditDefaultsOnly, Category = "PoolPawn")
@@ -167,4 +166,6 @@ protected:
 	uint8 bIsActionPressed : 1;
 
 	uint8 bIsActionPressedLastFrame : 1;
+
+	uint8 bIsFloatingToRepresenter_Client : 1;
 };

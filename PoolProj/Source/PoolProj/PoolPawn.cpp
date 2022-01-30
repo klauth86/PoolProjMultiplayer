@@ -37,6 +37,7 @@ APoolPawn::APoolPawn()
 	bIsFloatingToRepresenter = false;
 	bHasBeenLaunched = false;
 	bIsActionPressed = false;
+	bIsFloatingToRepresenter_Client = false;
 }
 
 void APoolPawn::BeginPlay()
@@ -56,7 +57,7 @@ void APoolPawn::BeginPlay()
 			if (representer->ActorHasTag(playerTag))
 			{
 				Representer = representer;
-				AttachToRepresneter();
+				AttachToActor(Representer, FAttachmentTransformRules::KeepWorldTransform);
 				break;
 			}
 		}
@@ -87,6 +88,29 @@ void APoolPawn::Tick(float DeltaTime)
 	{
 		SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
 	}
+	else if (bIsFloatingToRepresenter)
+	{
+		if (!bIsFloatingToRepresenter_Client)
+		{
+			PreFloatLocation = GetActorLocation();
+			PreFloatRotation = GetActorRotation();
+
+			bIsFloatingToRepresenter_Client = true;
+		}
+		else {
+			if (RestorePositionTimeLeft > 0) {
+				float alpha = 1 - RestorePositionTimeLeft / RestorePositionTime;
+				SetActorLocation(FMath::Lerp(PreFloatLocation, Representer->GetActorLocation() + GetRepresenterOffset(Representer->GetActorRotation()), alpha));
+				SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
+			}
+			else {
+				SetActorLocation(Representer->GetActorLocation() + GetRepresenterOffset(Representer->GetActorRotation()));
+				SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
+				
+				bIsFloatingToRepresenter_Client = false;
+			}
+		}
+	}
 	
 	if (!HasAuthority()) return;
 
@@ -114,7 +138,8 @@ void APoolPawn::Tick(float DeltaTime)
 			Representer->SetActorLocation(PreLaunchLocation);
 			Representer->SetActorRotation(PreLaunchRotation);
 
-			AttachToRepresneter();
+			AttachToActor(Representer, FAttachmentTransformRules::KeepWorldTransform);
+
 			EndTurn();
 		}
 	}
@@ -165,14 +190,12 @@ void APoolPawn::Tick(float DeltaTime)
 
 			if (allBallsAreStopped)
 			{
-				RestorePositionTimeLeft = RestorePositionTime;
-				
 				PreLaunchRotation = Representer->GetActorRotation(); // Use same variable avoiding of need to add other
 
-				PreFloatLocation = GetActorLocation();
-				PreFloatRotation = GetActorRotation();
+				RestorePositionTimeLeft = RestorePositionTime;
 				
 				bIsFloatingToRepresenter = true;
+				
 				EndTurn();
 			}
 		}
@@ -186,18 +209,13 @@ void APoolPawn::Tick(float DeltaTime)
 		if (RestorePositionTimeLeft > 0)
 		{
 			float alpha = 1 - RestorePositionTimeLeft / RestorePositionTime;
-
 			Representer->SetActorRotation(FMath::Lerp(PreLaunchRotation, targetRotation, alpha));
-
-			SetActorLocation(FMath::Lerp(PreFloatLocation, Representer->GetActorLocation() + GetRepresenterOffset(targetRotation), alpha));
-			SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
 		}
 		else
 		{
 			Representer->SetActorRotation(targetRotation);
-			
-			SetActorLocation(Representer->GetActorLocation() + GetRepresenterOffset(targetRotation));			
-			AttachToRepresneter();
+					
+			AttachToActor(Representer, FAttachmentTransformRules::KeepWorldTransform);
 
 			bIsFloatingToRepresenter = false;
 		}
@@ -233,6 +251,7 @@ void APoolPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APoolPawn, RestorePositionTimeLeft);
 	DOREPLIFETIME(APoolPawn, Strength);
 	DOREPLIFETIME(APoolPawn, Representer);
 	DOREPLIFETIME(APoolPawn, bIsPrepared);
@@ -341,12 +360,6 @@ void APoolPawn::UnInitUI()
 {
 	if (GameWidget) GameWidget->RemoveFromViewport();
 	GameWidget = nullptr;
-}
-
-void APoolPawn::AttachToRepresneter()
-{
-	AttachToActor(Representer, FAttachmentTransformRules::KeepWorldTransform);
-	SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
 }
 
 void APoolPawn::EndTurn()
