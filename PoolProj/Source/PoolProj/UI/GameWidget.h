@@ -17,10 +17,13 @@ public:
 	void NativeDestruct() override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameWidget")
-	void OnStartTurn();
+		void OnStartTurn();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameWidget")
 		void OnOpponentTurn();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "GameWidget")
+		void OnStrength(float strength);
 
 protected:
 

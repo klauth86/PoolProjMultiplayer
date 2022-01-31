@@ -30,6 +30,8 @@ public:
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	void SetStrength(float strength);
+
 	bool IsPrepared() const { return bIsPrepared; }
 
 	UFUNCTION(Server, Reliable)
@@ -75,6 +77,9 @@ protected:
 	void OnShot(UClass* ballClass) { Shots.Add(ballClass); }
 
 	void Client_OnPrepared(UObject* widgetOwner);
+
+	UFUNCTION()
+	void OnRep_Strength();
 
 	UFUNCTION()
 		void OnRep_IsPrepared();
@@ -145,7 +150,7 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_Shots)
 		TArray<UClass*> Shots;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_Strength)
 		float Strength;
 
 	UPROPERTY(Replicated)

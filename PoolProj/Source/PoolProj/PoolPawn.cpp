@@ -148,7 +148,7 @@ void APoolPawn::Tick(float DeltaTime)
 	{
 		StrengthTimeLeft -= DeltaTime;
 		if (StrengthTimeLeft < 0) StrengthTimeLeft = 0;
-		Strength = FMath::Lerp(1.f, 0.f, StrengthTimeLeft / StrengthTime);
+		SetStrength(FMath::Lerp(1.f, 0.f, StrengthTimeLeft / StrengthTime));
 
 		bIsActionPressedLastFrame = bIsActionPressed;
 	}
@@ -261,6 +261,16 @@ void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(APoolPawn, bHasBeenLaunched);
 }
 
+void APoolPawn::SetStrength(float strength)
+{
+	Strength = strength;
+
+	if (GameWidget)
+	{
+		GameWidget->OnStrength(Strength);
+	}
+}
+
 void APoolPawn::SetIsActive(bool isActive)
 {
 	bIsActive = isActive;
@@ -303,17 +313,9 @@ void APoolPawn::Server_StartFire_Implementation()
 {
 	if (!bIsActive) return;
 
-	if (!bHasBeenLaunched)
-	{
-		StrengthTimeLeft = StrengthTime;
-		Strength = 0;
-
-		bIsActionPressed = true;
-	}
-	else
-	{
-		bIsActionPressed = true;
-	}
+	if (!bHasBeenLaunched) StrengthTimeLeft = StrengthTime;
+	
+	bIsActionPressed = true;
 }
 
 void APoolPawn::Server_StopFire_Implementation()
@@ -324,6 +326,14 @@ void APoolPawn::Server_StopFire_Implementation()
 }
 
 void APoolPawn::Server_Skip_Implementation() { if (!bIsActive) return;  ActionRouter::Server_OnStartNextTurn.ExecuteIfBound(); }
+
+void APoolPawn::OnRep_Strength()
+{
+	if (GameWidget)
+	{
+		GameWidget->OnStrength(Strength);
+	}
+}
 
 void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPlayerPrepared.ExecuteIfBound(); }
 
@@ -381,6 +391,8 @@ void APoolPawn::EndTurn()
 
 	bHasBeenLaunched = false;
 	bIsActionPressed = false;
+
+	SetStrength(0);
 
 	Server_Skip_Implementation();
 }
