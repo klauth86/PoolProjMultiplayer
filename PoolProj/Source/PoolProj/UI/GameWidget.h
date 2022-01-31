@@ -19,6 +19,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameWidget")
 	void OnStartTurn();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "GameWidget")
+		void OnOpponentTurn();
+
 protected:
 
 	UFUNCTION(BlueprintCallable, Category = "GameWidget")

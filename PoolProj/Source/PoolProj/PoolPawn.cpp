@@ -264,10 +264,13 @@ void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 void APoolPawn::SetIsActive(bool isActive)
 {
 	bIsActive = isActive;
-	if (isActive && GameWidget)
+	
+	if (GameWidget)
 	{
-		GameWidget->OnStartTurn();
-		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Start turn!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName());
+		if (bIsActive) 
+			GameWidget->OnStartTurn();
+		else
+			GameWidget->OnOpponentTurn();
 	}
 
 	if (GetRemoteRole() == ENetRole::ROLE_AutonomousProxy && Representer) return bIsActive ? Representer->ActivateDecorator() : Representer->DeActivateDecorator();
@@ -326,10 +329,12 @@ void APoolPawn::OnRep_IsPrepared() { if (bIsPrepared) ActionRouter::Server_OnPla
 
 void APoolPawn::OnRep_IsActive()
 {
-	if (GameWidget && bIsActive)
+	if (GameWidget)
 	{
-		GameWidget->OnStartTurn();
-		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Start turn!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName());
+		if (bIsActive)
+			GameWidget->OnStartTurn();
+		else
+			GameWidget->OnOpponentTurn();
 	}
 
 	if (!HasNetOwner() && Representer) return bIsActive ? Representer->ActivateDecorator() : Representer->DeActivateDecorator();
@@ -355,6 +360,7 @@ void APoolPawn::InitUI()
 		{
 			GameWidget = gameWidget;
 			GameWidget->AddToViewport();
+			GameWidget->OnOpponentTurn();
 		}
 	}
 }
