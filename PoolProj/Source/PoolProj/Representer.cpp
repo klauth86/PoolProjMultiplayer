@@ -49,8 +49,6 @@ void ARepresenter::StopBraking()
 void ARepresenter::Stop() const
 {
 	GetStaticMeshComponent()->PutAllRigidBodiesToSleep();
-	GetStaticMeshComponent()->WakeAllRigidBodies();
-
 	GetStaticMeshComponent()->SetSimulatePhysics(false);
 }
 

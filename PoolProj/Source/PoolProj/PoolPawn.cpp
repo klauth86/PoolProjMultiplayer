@@ -136,10 +136,8 @@ void APoolPawn::Tick(float DeltaTime)
 		for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
 		{
 			ABallActor* ball = *It;
-
 			if (ball->IsShot()) continue;
-
-			if (!ball->IsStopped()) allBallsAreStopped = false;
+			if (!ball->CanBeStopped()) allBallsAreStopped = false;
 		}
 
 		if (allBallsAreStopped) EndTurn();
@@ -161,11 +159,7 @@ void APoolPawn::Tick(float DeltaTime)
 		PreLaunchLocation = Representer->GetActorLocation();
 		PreLaunchRotation = Representer->GetActorRotation();
 
-		for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
-		{
-			ABallActor* ballActor = *It;
-			ballActor->Wake();
-		}
+		WakeUpBalls();
 
 		Representer->Launch(Strength);
 		bHasBeenLaunched = true;
@@ -183,18 +177,14 @@ void APoolPawn::Tick(float DeltaTime)
 			for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
 			{
 				ABallActor* ball = *It;
-
 				if (ball->IsShot()) continue;
-
-				if (!ball->IsStopped()) allBallsAreStopped = false;
+				if (!ball->CanBeStopped()) allBallsAreStopped = false;
 			}
 
 			if (allBallsAreStopped)
 			{
 				PreLaunchRotation = Representer->GetActorRotation(); // Use same variable avoiding of need to add other
-
-				RestorePositionTimeLeft = RestorePositionTime;
-				
+				RestorePositionTimeLeft = RestorePositionTime;				
 				bIsFloatingToRepresenter = true;
 				
 				EndTurn();
@@ -383,11 +373,7 @@ void APoolPawn::UnInitUI()
 
 void APoolPawn::EndTurn()
 {
-	for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
-	{
-		ABallActor* ball = *It;
-		ball->Sleep();
-	}
+	PutBallsToSleep();
 
 	bHasBeenLaunched = false;
 	bIsActionPressed = false;
@@ -403,5 +389,23 @@ void APoolPawn::Client_OnLostPoint_Implementation() {
 	if (USoundBase* soundBase = UGameDataSingleton::GetInstance()->GetLostPointSfx())
 	{
 		UGameplayStatics::PlaySound2D(GetWorld(), soundBase);
+	}
+}
+
+void APoolPawn::PutBallsToSleep()
+{
+	for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
+	{
+		ABallActor* ballActor = *It;
+		ballActor->Sleep();
+	}
+}
+
+void APoolPawn::WakeUpBalls()
+{
+	for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
+	{
+		ABallActor* ballActor = *It;
+		ballActor->Wake();
 	}
 }

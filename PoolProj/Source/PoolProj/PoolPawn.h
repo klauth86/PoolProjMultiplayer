@@ -100,6 +100,10 @@ protected:
 	void Client_OnLostPoint();
 	void Client_OnLostPoint_Implementation();
 
+	void PutBallsToSleep();
+
+	void WakeUpBalls();
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"), Category = "PoolPawn")

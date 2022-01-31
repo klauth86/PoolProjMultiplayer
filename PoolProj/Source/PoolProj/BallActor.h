@@ -20,7 +20,7 @@ public:
 
 	void Sleep() const;
 
-	bool IsStopped() const;
+	bool CanBeStopped() const;
 
 	bool IsShot() const { return bIsShot; }
 

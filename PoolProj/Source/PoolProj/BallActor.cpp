@@ -30,16 +30,8 @@ void ABallActor::Wake() const { GetStaticMeshComponent()->SetSimulatePhysics(tru
 
 void ABallActor::Sleep() const { GetStaticMeshComponent()->SetSimulatePhysics(false); }
 
-bool ABallActor::IsStopped() const
+bool ABallActor::CanBeStopped() const
 {
-	bool nearlyNoAngularVelocity = GetStaticMeshComponent()->GetPhysicsAngularVelocityInRadians().IsNearlyZero();
-	bool nearlyNoLinearVelocity = GetStaticMeshComponent()->GetPhysicsLinearVelocity().IsNearlyZero();
-
-	if (nearlyNoAngularVelocity && nearlyNoLinearVelocity)
-	{
-		Sleep();
-		return true;
-	}
-
-	return false;
+	return GetStaticMeshComponent()->GetPhysicsAngularVelocityInRadians().IsNearlyZero() &&
+		GetStaticMeshComponent()->GetPhysicsLinearVelocity().IsNearlyZero();
 }
