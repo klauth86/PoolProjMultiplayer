@@ -84,6 +84,12 @@ void APoolPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!bIsActive) {
+		FRotator targetRotation = (Representer->GetActorLocation() - GetActorLocation()).Rotation();
+		if (!(targetRotation - GetActorRotation()).IsNearlyZero()) {
+			SetActorRotation(targetRotation);
+		}
+	}
 	if (bHasBeenLaunched && !bIsFloatingToRepresenter)
 	{
 		SetActorRotation((Representer->GetActorLocation() - GetActorLocation()).Rotation());
@@ -118,6 +124,13 @@ void APoolPawn::Tick(float DeltaTime)
 	{
 		Representer->Stop();
 
+		Representer->SetActorLocation(PreLaunchLocation); ////// TODO Check if there could be collision with ball!
+		Representer->SetActorRotation(PreLaunchRotation);
+
+		AttachToActor(Representer, FAttachmentTransformRules::KeepWorldTransform);
+
+		Client_OnLostPoint();
+
 		bool allBallsAreStopped = true;
 
 		for (TActorIterator<ABallActor> It(GetWorld()); It; ++It)
@@ -129,19 +142,7 @@ void APoolPawn::Tick(float DeltaTime)
 			if (!ball->IsStopped()) allBallsAreStopped = false;
 		}
 
-		if (allBallsAreStopped)
-		{
-			Client_OnLostPoint();
-
-			////// TODO Check if there could be collision with ball!
-
-			Representer->SetActorLocation(PreLaunchLocation);
-			Representer->SetActorRotation(PreLaunchRotation);
-
-			AttachToActor(Representer, FAttachmentTransformRules::KeepWorldTransform);
-
-			EndTurn();
-		}
+		if (allBallsAreStopped) EndTurn();
 	}
 	else if (bIsActionPressed && !bHasBeenLaunched)
 	{
@@ -372,6 +373,7 @@ void APoolPawn::EndTurn()
 
 	bHasBeenLaunched = false;
 	bIsActionPressed = false;
+
 	Server_Skip_Implementation();
 }
 

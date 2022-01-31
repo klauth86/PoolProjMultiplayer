@@ -23,14 +23,12 @@ void ABallActor::BeginPlay()
 		GetStaticMeshComponent()->SetUseCCD(true);
 		GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
 		GetStaticMeshComponent()->SetNotifyRigidBodyCollision(true);
-
-		GetStaticMeshComponent()->SetSimulatePhysics(true);
 	}
 }
 
-void ABallActor::Wake() const { GetStaticMeshComponent()->WakeAllRigidBodies(); }
+void ABallActor::Wake() const { GetStaticMeshComponent()->SetSimulatePhysics(true); }
 
-void ABallActor::Sleep() const { GetStaticMeshComponent()->PutAllRigidBodiesToSleep(); }
+void ABallActor::Sleep() const { GetStaticMeshComponent()->SetSimulatePhysics(false); }
 
 bool ABallActor::IsStopped() const
 {
