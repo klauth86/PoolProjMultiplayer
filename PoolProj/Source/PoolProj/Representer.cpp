@@ -28,7 +28,7 @@ void ARepresenter::BeginPlay()
 void ARepresenter::Launch(float strength)
 {
 	GetStaticMeshComponent()->SetSimulatePhysics(true);
-	GetStaticMeshComponent()->AddImpulse(GetActorForwardVector() * strength * 76000, NAME_None, true);
+	GetStaticMeshComponent()->AddImpulse(GetActorForwardVector() * strength * 267600, NAME_None, true);
 }
 
 void ARepresenter::StartBraking()
