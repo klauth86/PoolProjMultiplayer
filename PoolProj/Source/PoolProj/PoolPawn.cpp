@@ -270,7 +270,7 @@ void APoolPawn::SetIsActive(bool isActive)
 		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Start turn!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName());
 	}
 
-	if (GetRemoteRole() == ENetRole::ROLE_AutonomousProxy && Representer) return bIsActive ? Representer->ActivateDecor() : Representer->DeactivateDecor();
+	if (GetRemoteRole() == ENetRole::ROLE_AutonomousProxy && Representer) return bIsActive ? Representer->ActivateDecorator() : Representer->DeActivateDecorator();
 }
 
 FVector APoolPawn::GetRepresenterOffset(FRotator rotation) const
@@ -332,7 +332,7 @@ void APoolPawn::OnRep_IsActive()
 		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Start turn!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName());
 	}
 
-	if (!HasNetOwner() && Representer) return bIsActive ? Representer->ActivateDecor() : Representer->DeactivateDecor();
+	if (!HasNetOwner() && Representer) return bIsActive ? Representer->ActivateDecorator() : Representer->DeActivateDecorator();
 }
 
 void APoolPawn::OnRep_Shots()

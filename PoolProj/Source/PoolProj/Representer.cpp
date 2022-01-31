@@ -2,26 +2,14 @@
 
 
 #include "Representer.h"
-#include "Components/StaticMeshComponent.h"
-#include "Components/BillboardComponent.h"
+#include "DecoratorActor.h"
 
 ARepresenter::ARepresenter()
 {
-	DecoratorComponent = CreateDefaultSubobject<UStaticMeshComponent>("DecoratorComponent");
-	DecoratorComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-	DecoratorComponent->SetVisibility(false);
-	DecoratorComponent->SetHiddenInGame(false);
-
 	bReplicates = true;
 	SetReplicateMovement(true);
 
 	SetMobility(EComponentMobility::Movable);
-
-	Offset = 10;
-	Amplitude = 4;
-	Frequency = 3;
-
-	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ARepresenter::BeginPlay()
@@ -35,15 +23,6 @@ void ARepresenter::BeginPlay()
 		GetStaticMeshComponent()->SetCollisionProfileName(TEXT("BlockAll"));
 		GetStaticMeshComponent()->SetNotifyRigidBodyCollision(true);
 	}
-}
-
-void ARepresenter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (!DecoratorComponent->IsVisible()) return;
-
-	DecoratorComponent->SetRelativeLocation(FVector(0, 0, FMath::Sin(GetWorld()->TimeSeconds * Frequency) * Amplitude + Offset));
 }
 
 void ARepresenter::Launch(float strength)
@@ -91,10 +70,17 @@ bool ARepresenter::IsStopped() const
 	return false;
 }
 
-void ARepresenter::ActivateDecor() const
+void ARepresenter::ActivateDecorator()
 {
-	DecoratorComponent->SetRelativeLocation(FVector(0, 0, FMath::Sin(GetWorld()->TimeSeconds * Frequency) * Amplitude + Offset));
-	DecoratorComponent->SetVisibility(true);
+	if (DecoratorActorClass)
+	{
+		FVector offset = DecoratorActorClass->GetDefaultObject<ADecoratorActor>()->GetDecoratorOffset(GetWorld()->TimeSeconds);
+		DecoratorActor = GetWorld()->SpawnActor<ADecoratorActor>(DecoratorActorClass, GetActorLocation() + offset, FRotator::ZeroRotator);
+		DecoratorActor->SetTarget(this);
+	}
 }
 
-void ARepresenter::DeactivateDecor() const { DecoratorComponent->SetVisibility(false); }
+void ARepresenter::DeActivateDecorator() {  
+	if (DecoratorActor) DecoratorActor->Destroy();
+	DecoratorActor = nullptr;
+}

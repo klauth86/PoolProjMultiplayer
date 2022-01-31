@@ -5,6 +5,8 @@
 #include "Engine/StaticMeshActor.h"
 #include "Representer.generated.h"
 
+class ADecoratorActor;
+
 UCLASS()
 class POOLPROJ_API ARepresenter : public AStaticMeshActor
 {
@@ -16,8 +18,6 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void Tick(float DeltaTime) override;
-
 	void Launch(float strength);
 
 	void StartBraking();
@@ -28,9 +28,9 @@ public:
 
 	bool IsStopped() const;
 
-	void ActivateDecor() const;
+	void ActivateDecorator();
 
-	void DeactivateDecor() const;
+	void DeActivateDecorator();
 
 protected:
 
@@ -38,15 +38,9 @@ protected:
 
 	float InitLinearDamping;
 
-	UPROPERTY(EditAnywhere, Category = "Representer")
-		float Offset;
+	UPROPERTY(EditDefaultsOnly, Category = "Representer")
+		TSubclassOf<ADecoratorActor> DecoratorActorClass;
 
-	UPROPERTY(EditAnywhere, Category = "Representer")
-		float Amplitude;
-
-	UPROPERTY(EditAnywhere, Category = "Representer")
-		float Frequency;
-
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"), Category = "Representer")
-		UStaticMeshComponent* DecoratorComponent;
+	UPROPERTY()
+		ADecoratorActor* DecoratorActor;
 };
