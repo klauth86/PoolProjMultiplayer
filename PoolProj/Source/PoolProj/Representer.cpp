@@ -7,10 +7,10 @@
 
 ARepresenter::ARepresenter()
 {
-	BillboardComponent = CreateDefaultSubobject<UBillboardComponent>("BillboardComponent");
-	BillboardComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-	BillboardComponent->SetVisibility(false);
-	BillboardComponent->SetHiddenInGame(false);
+	DecoratorComponent = CreateDefaultSubobject<UStaticMeshComponent>("DecoratorComponent");
+	DecoratorComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	DecoratorComponent->SetVisibility(false);
+	DecoratorComponent->SetHiddenInGame(false);
 
 	bReplicates = true;
 	SetReplicateMovement(true);
@@ -41,9 +41,9 @@ void ARepresenter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!BillboardComponent->IsVisible()) return;
+	if (!DecoratorComponent->IsVisible()) return;
 
-	BillboardComponent->SetRelativeLocation(FVector(0, 0, FMath::Sin(GetWorld()->TimeSeconds * Frequency) * Amplitude + Offset));
+	DecoratorComponent->SetRelativeLocation(FVector(0, 0, FMath::Sin(GetWorld()->TimeSeconds * Frequency) * Amplitude + Offset));
 }
 
 void ARepresenter::Launch(float strength)
@@ -93,8 +93,8 @@ bool ARepresenter::IsStopped() const
 
 void ARepresenter::ActivateDecor() const
 {
-	BillboardComponent->SetRelativeLocation(FVector(0, 0, FMath::Sin(GetWorld()->TimeSeconds * Frequency) * Amplitude + Offset));
-	BillboardComponent->SetVisibility(true);
+	DecoratorComponent->SetRelativeLocation(FVector(0, 0, FMath::Sin(GetWorld()->TimeSeconds * Frequency) * Amplitude + Offset));
+	DecoratorComponent->SetVisibility(true);
 }
 
-void ARepresenter::DeactivateDecor() const { BillboardComponent->SetVisibility(false); }
+void ARepresenter::DeactivateDecor() const { DecoratorComponent->SetVisibility(false); }

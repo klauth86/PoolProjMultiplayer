@@ -269,6 +269,8 @@ void APoolPawn::SetIsActive(bool isActive)
 		GameWidget->OnStartTurn();
 		UE_LOG(LogTemp, Warning, TEXT("*** %s: %s Start turn!"), *(GetWorld()->GetNetMode() == ENetMode::NM_Client ? FString::Printf(TEXT("Client %d"), GPlayInEditorID) : FString("Server")), *Representer->GetName());
 	}
+
+	if (GetRemoteRole() == ENetRole::ROLE_AutonomousProxy && Representer) return bIsActive ? Representer->ActivateDecor() : Representer->DeactivateDecor();
 }
 
 FVector APoolPawn::GetRepresenterOffset(FRotator rotation) const

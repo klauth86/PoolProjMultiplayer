@@ -5,9 +5,6 @@
 #include "Engine/StaticMeshActor.h"
 #include "Representer.generated.h"
 
-class UDecoratorWidget;
-class UBillboardComponent;
-
 UCLASS()
 class POOLPROJ_API ARepresenter : public AStaticMeshActor
 {
@@ -51,5 +48,5 @@ protected:
 		float Frequency;
 
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"), Category = "Representer")
-		UBillboardComponent* BillboardComponent;
+		UStaticMeshComponent* DecoratorComponent;
 };
