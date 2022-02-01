@@ -243,6 +243,7 @@ void APoolPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APoolPawn, RestorePositionTimeLeft);
+	DOREPLIFETIME(APoolPawn, Shots);
 	DOREPLIFETIME(APoolPawn, Strength);
 	DOREPLIFETIME(APoolPawn, Representer);
 	DOREPLIFETIME(APoolPawn, bIsPrepared);
